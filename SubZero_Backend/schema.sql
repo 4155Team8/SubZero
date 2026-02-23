@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS billingcycle (
 CREATE TABLE IF NOT EXISTS subscription (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
-  cost DECIMAL(10,2) NOT NULL CHECK (cost >= 0),
+  cost DECIMAL(10,2) NOT NULL CHECK (cost > 0),
   user_id INT NOT NULL,
   category_id INT NOT NULL,
   billing_cycle_id INT NOT NULL,
