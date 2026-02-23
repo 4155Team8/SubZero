@@ -9,7 +9,10 @@ const {
   deleteSubscription
 } = require("./subscriptionModel");
 
-app.post("/subscriptions", async (req,res)=>{
+const authRoutes = require("./authRoutes");
+app.use("/auth", authRoutes);
+
+app.post("/subscriptions", async (req, res) => {
   const { name, cost, user_id, category_id, billing_cycle_id } = req.body;
 
   if (!name || typeof name !== "string") {
@@ -29,12 +32,12 @@ app.post("/subscriptions", async (req,res)=>{
   }
 });
 
-app.get("/subscriptions", async (req,res)=>{
+app.get("/subscriptions", async (req, res) => {
   const data = await getSubscription();
   res.json(data);
 });
 
-app.put("/subscriptions/:id", async (req,res)=>{
+app.put("/subscriptions/:id", async (req, res) => {
   const { name, cost, user_id, category_id, billing_cycle_id } = req.body;
 
   if (!name || typeof name !== "string") {
@@ -54,12 +57,12 @@ app.put("/subscriptions/:id", async (req,res)=>{
   }
 });
 
-app.delete("/subscriptions/:id", async (req,res)=>{
+app.delete("/subscriptions/:id", async (req, res) => {
   const result = await deleteSubscription(req.params.id);
   res.json(result);
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, ()=>{
+app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
