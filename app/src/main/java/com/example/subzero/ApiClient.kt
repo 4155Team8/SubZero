@@ -6,10 +6,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiClient {
-
-    // ⚠️ Change this to your server's address.
-    // Use 10.0.2.2 for Android emulator → localhost, or your LAN IP for a real device.
-    private const val BASE_URL = "http://10.148.81.86:3000/"
+    // url example = "http://192.168.1.142:3000/"
+    private const val BASE_URL = "url"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

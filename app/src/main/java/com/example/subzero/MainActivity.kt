@@ -18,14 +18,14 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
 
     private lateinit var tilEmail: TextInputLayout
-    private lateinit var tilPassword: TextInputLayout
-    private lateinit var etEmail: TextInputEditText
-    private lateinit var etPassword: TextInputEditText
-    private lateinit var btnSignIn: MaterialButton
-    private lateinit var tvDemoHint: TextView
-    private lateinit var tvGoToRegister: TextView
+        private lateinit var tilPassword: TextInputLayout
+        private lateinit var etEmail: TextInputEditText
+        private lateinit var etPassword: TextInputEditText
+        private lateinit var btnSignIn: MaterialButton
+        private lateinit var tvDemoHint: TextView
+        private lateinit var tvGoToRegister: TextView
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+        override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // If already logged in, skip straight to the dashboard
