@@ -6,7 +6,8 @@ const {
   createSubscription,
   getSubscription,
   updateSubscription,
-  deleteSubscription
+  deleteSubscription,
+  getSubscriptionNeedingReminder
 } = require("./subscriptionModel");
 
 const authRoutes = require("./authRoutes");
@@ -65,4 +66,16 @@ app.delete("/subscriptions/:id", async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+app.get('/reminders', async (req,res)=>{
+  try{
+    const data= await getSubscriptionNeedingReminder();
+    res.json(data);
+
+  }
+  catch(err){
+    console.error(err);
+    res.status(500).json({error: err.message});
+  }
 });

@@ -32,10 +32,17 @@ async function deleteSubscription(id){
     );
     return {message:"Deleted"};
 }
+const getSubscriptionNeedingReminder= async ()=>{
+    const query='SELECT id, name, cost, renewal_date, reminder_days_before FROM subscription WHERE is_active=TRUE AND renewal_date <= DATE_ADD(CURDATE(), INTERVAL reminder_days_before DAY) AND (last_reminded_at is NULL OR last_reminded_at < CURDATE())';
+    const [results]= await db.query(query);
+    return results;
 
+};
+    
 module.exports = {
     createSubscription,
     getSubscription,
     updateSubscription,
-    deleteSubscription
+    deleteSubscription,
+    getSubscriptionNeedingReminder
 };
