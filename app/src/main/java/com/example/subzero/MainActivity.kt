@@ -67,6 +67,10 @@ class MainActivity : AppCompatActivity() {
         tvGoToRegister.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
+
+        findViewById<TextView>(R.id.tvForgotPassword).setOnClickListener {
+            startActivity(Intent(this, ForgotPasswordActivity::class.java))
+        }
     }
 
     private fun validateInputs(email: String, password: String): Boolean {
@@ -119,8 +123,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun navigateToDashboard() {
         // TODO: replace DashboardActivity with your actual next screen
-        // startActivity(Intent(this, DashboardActivity::class.java))
-        Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show()
-        finish()
+        startActivity(Intent(this, InsightsActivity::class.java))
     }
 }

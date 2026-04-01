@@ -26,6 +26,8 @@
         </activity>
 
         <activity android:name=".RegisterActivity" />
+        <activity android:name=".InsightsActivity" />
+        <activity android:name=".ForgotPasswordActivity" />
 
     </application>
 
