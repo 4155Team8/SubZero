@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity() {
         override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // If already logged in, skip straight to the dashboard
+        // if the user is already logged js go to dashboard
         if (SessionManager.isLoggedIn(this)) {
             navigateToDashboard()
             return
@@ -61,7 +61,7 @@ class MainActivity : AppCompatActivity() {
         btnSignIn.setOnClickListener {
             val email    = etEmail.text?.toString()?.trim() ?: ""
             val password = etPassword.text?.toString() ?: ""
-            if (validateInputs(email, password)) performLogin(email, password)
+            if (validateInputs(email, password)) login(email, password)
         }
 
         tvGoToRegister.setOnClickListener {
@@ -73,6 +73,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // input validation for email and password
+    // checks whether email is a valid email (ie format)
+    // checks password only by not empty for now (will add length and such later)
     private fun validateInputs(email: String, password: String): Boolean {
         var valid = true
 
@@ -93,7 +96,9 @@ class MainActivity : AppCompatActivity() {
         return valid
     }
 
-    private fun performLogin(email: String, password: String) {
+
+    // calls login and saves the session
+    private fun login(email: String, password: String) {
         setLoading(true)
 
         lifecycleScope.launch {
@@ -116,13 +121,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // TODO: make cool animation for signing in
     private fun setLoading(loading: Boolean) {
         btnSignIn.isEnabled = !loading
         btnSignIn.text = if (loading) "Signing in…" else "Sign In"
     }
 
+    // navigates to insights atm, should change to dashboard once that's been constructed
     private fun navigateToDashboard() {
-        // TODO: replace DashboardActivity with your actual next screen
         startActivity(Intent(this, InsightsActivity::class.java))
     }
 }

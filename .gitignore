@@ -13,3 +13,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+/SubZero_backend/.env
+/SubZero_backend/node_modules

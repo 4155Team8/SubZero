@@ -9,9 +9,12 @@ sealed class AuthResult<out T> {
 
 object AuthRepository {
 
-    private val api = ApiClient.instance
     private val gson = Gson()
 
+    // read instance fresh each call so test injection w/ ApiClient.setInstanceForTesting() works
+    private val api get() = ApiClient.instance
+
+    // login logic
     suspend fun login(email: String, password: String): AuthResult<LoginResponse> {
         return try {
             val response = api.login(LoginRequest(email, password))
@@ -26,6 +29,7 @@ object AuthRepository {
         }
     }
 
+    // register logic
     suspend fun register(email: String, password: String): AuthResult<RegisterResponse> {
         return try {
             val response = api.register(RegisterRequest(email, password))

@@ -53,6 +53,7 @@ class RegisterActivity : AppCompatActivity() {
         tvGoToLogin.setOnClickListener { finish() }
     }
 
+    // checks email format, password length, and confirmation
     private fun validateInputs(email: String, password: String, confirm: String): Boolean {
         var valid = true
 
@@ -80,6 +81,7 @@ class RegisterActivity : AppCompatActivity() {
         return valid
     }
 
+    // calls registration
     private fun performRegister(email: String, password: String) {
         setLoading(true)
 
@@ -105,6 +107,7 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
 
+    // loading logic for feedback
     private fun setLoading(loading: Boolean) {
         btnRegister.isEnabled = !loading
         btnRegister.text = if (loading) "Creating account…" else "Create Account"

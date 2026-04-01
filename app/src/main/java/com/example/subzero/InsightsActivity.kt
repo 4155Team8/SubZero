@@ -18,8 +18,10 @@ import com.example.subzero.views.DonutChartView
 import com.example.subzero.views.DonutSlice
 import kotlinx.coroutines.launch
 
-class InsightsActivity : AppCompatActivity() {
 
+open class InsightsActivity : AppCompatActivity() {
+
+    // color palette for the page
     private val sliceColors = listOf(
         Color.parseColor("#E05252"),
         Color.parseColor("#4A90D9"),
@@ -30,7 +32,7 @@ class InsightsActivity : AppCompatActivity() {
         Color.parseColor("#E67E22"),
         Color.parseColor("#E91E8C"),
     )
-
+    // creates xml layout variables for the things to be rendered
     private lateinit var tvMonthlyTotal: TextView
     private lateinit var tvChangePercent: TextView
     private lateinit var tvChangeLabel: TextView
@@ -41,12 +43,13 @@ class InsightsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_insights)
-        initViews()
+        setContentView(R.layout.activity_insights) // telling app to draw activity_insights.xml
+        initViews() // initiates views
         setupBottomNav()
         loadInsights()
     }
 
+    // finds the views for each part of the UI
     private fun initViews() {
         tvMonthlyTotal     = findViewById(R.id.tvMonthlyTotal)
         tvChangePercent    = findViewById(R.id.tvChangePercent)
@@ -57,31 +60,37 @@ class InsightsActivity : AppCompatActivity() {
         breakdownContainer = findViewById(R.id.breakdownContainer)
     }
 
+    // sets up click functions for navbar
     private fun setupBottomNav() {
-        findViewById<LinearLayout>(R.id.navManage).setOnClickListener { finish() }
+        findViewById<LinearLayout>(R.id.navManage).setOnClickListener { /* nothing yet */ }
         findViewById<LinearLayout>(R.id.navInsights).setOnClickListener { /* already here */ }
         findViewById<LinearLayout>(R.id.navAlerts).setOnClickListener {
-            // TODO: navigate to AlertsActivity
+            // no alerts page yet
         }
         findViewById<LinearLayout>(R.id.navProfile).setOnClickListener {
-            // TODO: navigate to ProfileActivity
+            navigateToProfile()
         }
     }
 
+    // uses token for the user acc to load
     private fun loadInsights() {
         val token = SessionManager.getToken(this) ?: return
 
         lifecycleScope.launch {
             try {
+                // grab the subscriptions for the given account
                 val response = ApiClient.instance.getSubscriptions("Bearer $token")
 
+                // error handling
                 if (!response.isSuccessful) {
                     Toast.makeText(this@InsightsActivity, "Failed to load data", Toast.LENGTH_SHORT).show()
                     return@launch
                 }
 
+                // create a list w the subscriptions
                 val subscriptions: List<SubscriptionResponse> = response.body() ?: emptyList()
 
+                // rendering logic
                 if (subscriptions.isEmpty()) {
                     showEmptyState()
                 } else {
@@ -94,8 +103,9 @@ class InsightsActivity : AppCompatActivity() {
         }
     }
 
+
     private fun renderInsights(subscriptions: List<SubscriptionResponse>) {
-        // Monthly total
+        // monthly total
         val monthlyTotal: Double = subscriptions.sumOf { sub: SubscriptionResponse ->
             normaliseToMonthly(sub.cost, sub.billing_cycle)
         }
@@ -103,7 +113,7 @@ class InsightsActivity : AppCompatActivity() {
         tvChangePercent.text = "↘ 0%"
         tvChangeLabel.text   = "Same as last month"
 
-        // Group by category
+        // group by category
         val byCategory: Map<String, List<SubscriptionResponse>> =
             subscriptions.groupBy { sub: SubscriptionResponse -> sub.category }
 
@@ -116,7 +126,7 @@ class InsightsActivity : AppCompatActivity() {
             }
             .sortedByDescending { pair: Pair<String, Double> -> pair.second }
 
-        // Donut slices
+        // donut slices
         val slices: List<DonutSlice> = categoryTotals.mapIndexed { i: Int, pair: Pair<String, Double> ->
             DonutSlice(pair.second.toFloat(), sliceColors[i % sliceColors.size])
         }
@@ -124,7 +134,7 @@ class InsightsActivity : AppCompatActivity() {
         donutChart.visibility  = View.VISIBLE
         tvEmptyChart.visibility = View.GONE
 
-        // Legend
+        // legend
         legendContainer.removeAllViews()
         categoryTotals.forEachIndexed { i: Int, pair: Pair<String, Double> ->
             legendContainer.addView(
@@ -132,7 +142,7 @@ class InsightsActivity : AppCompatActivity() {
             )
         }
 
-        // Breakdown
+        // breakdown
         breakdownContainer.removeAllViews()
         val sorted: List<SubscriptionResponse> =
             subscriptions.sortedByDescending { sub: SubscriptionResponse -> sub.cost }
@@ -141,6 +151,7 @@ class InsightsActivity : AppCompatActivity() {
         }
     }
 
+    // empty placeholders
     private fun showEmptyState() {
         tvMonthlyTotal.text     = "$0.00"
         tvChangePercent.text    = ""
@@ -148,7 +159,6 @@ class InsightsActivity : AppCompatActivity() {
         donutChart.visibility   = View.GONE
         tvEmptyChart.visibility = View.VISIBLE
     }
-
     private fun buildLegendRow(color: Int, label: String, amount: Double): View {
         val dp = resources.displayMetrics.density
 
@@ -193,6 +203,7 @@ class InsightsActivity : AppCompatActivity() {
 
         return wrapper
     }
+
 
     private fun buildBreakdownRow(sub: SubscriptionResponse): View {
         val dp = resources.displayMetrics.density
@@ -249,7 +260,8 @@ class InsightsActivity : AppCompatActivity() {
         return wrapper
     }
 
-    private fun normaliseToMonthly(cost: Double, billingCycle: String): Double {
+    // just makes sure the billing cycles have normalized numbers
+    internal fun normaliseToMonthly(cost: Double, billingCycle: String): Double {
         return when {
             billingCycle.contains("daily",    ignoreCase = true) -> cost * 30
             billingCycle.contains("biweekly", ignoreCase = true) -> cost * 2.17
@@ -258,5 +270,8 @@ class InsightsActivity : AppCompatActivity() {
             billingCycle.contains("year",     ignoreCase = true) -> cost / 12
             else -> cost
         }
+    }
+    private fun navigateToProfile() {
+        startActivity(Intent(this, ProfileActivity::class.java))
     }
 }

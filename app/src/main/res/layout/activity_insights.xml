@@ -208,7 +208,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_grid"
-                android:tint="#AAAAAA" />
+                app:tint="#AAAAAA" />
             <TextView
                 android:layout_marginTop="4dp"
                 android:layout_width="wrap_content"
@@ -231,7 +231,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_trending_up"
-                android:tint="#5B2EFA" />
+                app:tint="#5B2EFA" />
             <TextView
                 android:layout_marginTop="4dp"
                 android:layout_width="wrap_content"
@@ -255,7 +255,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_bell"
-                android:tint="#AAAAAA" />
+                app:tint="#AAAAAA" />
             <TextView
                 android:layout_marginTop="4dp"
                 android:layout_width="wrap_content"
@@ -278,7 +278,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_person"
-                android:tint="#AAAAAA" />
+                app:tint="#AAAAAA" />
             <TextView
                 android:layout_marginTop="4dp"
                 android:layout_width="wrap_content"

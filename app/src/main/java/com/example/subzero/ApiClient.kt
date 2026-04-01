@@ -6,8 +6,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiClient {
-    // url example = "http://192.168.1.142:3000/"
-    private const val BASE_URL = "url"
+    // 10.0.2.2 is just what the emulator needs to reach the node server
+    private const val BASE_URL = "http://10.0.2.2:3000/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
@@ -17,12 +17,24 @@ object ApiClient {
         .addInterceptor(loggingInterceptor)
         .build()
 
-    val instance: ApiService by lazy {
-        Retrofit.Builder()
+    // allows tests to create a mock ApiService
+    private var testInstance: ApiService? = null
+
+    val instance: ApiService
+        get() = testInstance ?: Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(httpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ApiService::class.java)
+
+    // ONLY CALL FROM TESTS PLS
+    fun setInstanceForTesting(mock: ApiService) {
+        testInstance = mock
+    }
+
+    // resetting from tests
+    fun clearTestInstance() {
+        testInstance = null
     }
 }
