@@ -17,6 +17,7 @@ import com.example.subzero.network.SubscriptionResponse
 import com.example.subzero.views.DonutChartView
 import com.example.subzero.views.DonutSlice
 import kotlinx.coroutines.launch
+import retrofit2.Response
 
 
 open class InsightsActivity : AppCompatActivity() {
@@ -39,7 +40,7 @@ open class InsightsActivity : AppCompatActivity() {
     private lateinit var donutChart: DonutChartView
     private lateinit var tvEmptyChart: TextView
     private lateinit var legendContainer: LinearLayout
-    private lateinit var breakdownContainer: LinearLayout
+    private lateinit var subscriptionsByCategoryContainer: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,7 +58,7 @@ open class InsightsActivity : AppCompatActivity() {
         donutChart         = findViewById(R.id.donutChart)
         tvEmptyChart       = findViewById(R.id.tvEmptyChart)
         legendContainer    = findViewById(R.id.legendContainer)
-        breakdownContainer = findViewById(R.id.breakdownContainer)
+        subscriptionsByCategoryContainer = findViewById(R.id.subscriptionsByCategoryContainer)
     }
 
     // sets up click functions for navbar
@@ -142,12 +143,15 @@ open class InsightsActivity : AppCompatActivity() {
             )
         }
 
-        // breakdown
-        breakdownContainer.removeAllViews()
-        val sorted: List<SubscriptionResponse> =
-            subscriptions.sortedByDescending { sub: SubscriptionResponse -> sub.cost }
-        sorted.forEach { sub: SubscriptionResponse ->
-            breakdownContainer.addView(buildBreakdownRow(sub))
+        // Build grouped subscriptions by category
+        subscriptionsByCategoryContainer.removeAllViews()
+        categoryTotals.forEachIndexed { categoryIndex: Int, (categoryName, categoryTotal) ->
+            val categoryColor = sliceColors[categoryIndex % sliceColors.size]
+            val categorySubscriptions = byCategory[categoryName] ?: emptyList()
+
+            subscriptionsByCategoryContainer.addView(
+                buildCategoryGroup(categoryName, categoryColor, categoryTotal, categorySubscriptions)
+            )
         }
     }
 
@@ -158,6 +162,124 @@ open class InsightsActivity : AppCompatActivity() {
         tvChangeLabel.text      = "No subscriptions yet"
         donutChart.visibility   = View.GONE
         tvEmptyChart.visibility = View.VISIBLE
+    }
+
+    private fun buildCategoryGroup(
+        categoryName: String,
+        categoryColor: Int,
+        categoryTotal: Double,
+        subscriptions: List<SubscriptionResponse>
+    ): View {
+        val dp = resources.displayMetrics.density
+
+        // Create a card to wrap the entire category group
+        val card = androidx.cardview.widget.CardView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).also {
+                it.bottomMargin = (12 * dp).toInt()
+            }
+            radius = 18 * dp
+            cardElevation = 2 * dp
+            setCardBackgroundColor(Color.WHITE)
+        }
+
+        val containerLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setPadding((20 * dp).toInt(), (16 * dp).toInt(), (20 * dp).toInt(), (16 * dp).toInt())
+        }
+
+        // Category header with color indicator
+        val headerLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).also { it.bottomMargin = (12 * dp).toInt() }
+        }
+
+        // Color dot
+        val colorDot = View(this).apply {
+            layoutParams = LinearLayout.LayoutParams((12 * dp).toInt(), (12 * dp).toInt()).also {
+                it.marginEnd = (12 * dp).toInt()
+            }
+            background = ColorDrawable(categoryColor)
+        }
+
+        // Category name
+        val tvCategoryName = TextView(this).apply {
+            text = categoryName
+            textSize = 16f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(Color.parseColor("#222222"))
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+
+        // Category total
+        val tvCategoryTotal = TextView(this).apply {
+            text = "$%.2f".format(categoryTotal)
+            textSize = 16f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(Color.parseColor("#111111"))
+        }
+
+        headerLayout.addView(colorDot)
+        headerLayout.addView(tvCategoryName)
+        headerLayout.addView(tvCategoryTotal)
+        containerLayout.addView(headerLayout)
+
+        // Add subscriptions for this category
+        subscriptions.forEach { sub ->
+            containerLayout.addView(buildCategorySubscriptionRow(sub, dp))
+        }
+
+        card.addView(containerLayout)
+        return card
+    }
+
+    private fun buildCategorySubscriptionRow(sub: SubscriptionResponse, dp: Float): View {
+        val wrapper = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).also { it.topMargin = (8 * dp).toInt() }
+        }
+
+        // Indent to show it's a child of category
+        val leftPadding = (24 * dp).toInt()
+        row.setPadding(leftPadding, (8 * dp).toInt(), 0, (8 * dp).toInt())
+
+        val tvName = TextView(this).apply {
+            text = sub.name
+            textSize = 14f
+            setTextColor(Color.parseColor("#555555"))
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+
+        val tvMonthlyPrice = TextView(this).apply {
+            text = "$%.2f/mo".format(normaliseToMonthly(sub.cost, sub.billing_cycle))
+            textSize = 13f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(Color.parseColor("#333333"))
+        }
+
+        row.addView(tvName)
+        row.addView(tvMonthlyPrice)
+        wrapper.addView(row)
+
+        return wrapper
     }
     private fun buildLegendRow(color: Int, label: String, amount: Double): View {
         val dp = resources.displayMetrics.density
@@ -204,63 +326,6 @@ open class InsightsActivity : AppCompatActivity() {
         return wrapper
     }
 
-
-    private fun buildBreakdownRow(sub: SubscriptionResponse): View {
-        val dp = resources.displayMetrics.density
-
-        val wrapper = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-
-        val row = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(0, (10 * dp).toInt(), 0, (10 * dp).toInt())
-        }
-
-        val topRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity     = Gravity.CENTER_VERTICAL
-        }
-
-        val tvName = TextView(this).apply {
-            text         = sub.name
-            textSize     = 15f
-            setTextColor(Color.parseColor("#222222"))
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-        }
-
-        val tvCost = TextView(this).apply {
-            text      = "$%.2f".format(sub.cost)
-            textSize  = 15f
-            typeface  = Typeface.DEFAULT_BOLD
-            setTextColor(Color.parseColor("#111111"))
-        }
-
-        topRow.addView(tvName)
-        topRow.addView(tvCost)
-
-        val tvMeta = TextView(this).apply {
-            text      = "${sub.category}  ·  ${sub.billing_cycle}"
-            textSize  = 12f
-            setTextColor(Color.parseColor("#AAAAAA"))
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).also { it.topMargin = (2 * dp).toInt() }
-        }
-
-        row.addView(topRow)
-        row.addView(tvMeta)
-        wrapper.addView(row)
-
-        val divider = View(this).apply {
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1)
-            setBackgroundColor(Color.parseColor("#F0F0F0"))
-        }
-        wrapper.addView(divider)
-
-        return wrapper
-    }
-
-    // just makes sure the billing cycles have normalized numbers
     internal fun normaliseToMonthly(cost: Double, billingCycle: String): Double {
         return when {
             billingCycle.contains("daily",    ignoreCase = true) -> cost * 30

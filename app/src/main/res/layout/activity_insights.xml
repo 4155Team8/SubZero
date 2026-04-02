@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F4F6F9">
+    android:background="@drawable/gradient_background">
 
     <!-- Scrollable content -->
     <ScrollView
@@ -28,7 +28,7 @@
                 android:text="Insights"
                 android:textSize="30sp"
                 android:textStyle="bold"
-                android:textColor="#111111"
+                android:textColor="@android:color/white"
                 android:fontFamily="sans-serif-medium" />
 
             <TextView
@@ -37,7 +37,7 @@
                 android:layout_marginTop="2dp"
                 android:text="Track your spending habits"
                 android:textSize="14sp"
-                android:textColor="#888888" />
+                android:textColor="#CCffffff" />
 
             <!-- This Month card -->
             <androidx.cardview.widget.CardView
@@ -108,7 +108,7 @@
                 android:text="Spending by Category"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="#111111" />
+                android:textColor="@android:color/white" />
 
             <!-- Chart card -->
             <androidx.cardview.widget.CardView
@@ -154,33 +154,23 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Monthly Breakdown -->
+            <!-- Subscriptions by Category -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="28dp"
-                android:text="Monthly Breakdown"
+                android:text="Your Subscriptions"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="#111111" />
+                android:textColor="@android:color/white" />
 
-            <!-- Breakdown card -->
-            <androidx.cardview.widget.CardView
+            <!-- Subscriptions by category container -->
+            <LinearLayout
+                android:id="@+id/subscriptionsByCategoryContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                app:cardCornerRadius="18dp"
-                app:cardBackgroundColor="@android:color/white"
-                app:cardElevation="2dp">
-
-                <LinearLayout
-                    android:id="@+id/breakdownContainer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp" />
-
-            </androidx.cardview.widget.CardView>
+                android:orientation="vertical"
+                android:layout_marginTop="12dp" />
 
         </LinearLayout>
     </ScrollView>

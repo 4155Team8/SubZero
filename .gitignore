@@ -14,4 +14,6 @@
 .cxx
 local.properties
 /SubZero_backend/.env
-/SubZero_backend/node_modules
+/SubZero_backend/node_modules# IDE - Copilot and other IDE files
+.idea/copilot.data.migration.ask2agent.xml
+.idea/markdown.xml
