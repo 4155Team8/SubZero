@@ -64,23 +64,42 @@ class RegisterActivity : AppCompatActivity() {
             tilEmail.error = null
         }
 
-        if (password.length < 8) {
-            tilPassword.error = "Password must be at least 8 characters"
+        val passRes = checkPassword(password)
+        if (passRes.valid == false) {
+            tilPassword.error = passRes.message
             valid = false
-        } else {
-            tilPassword.error = null
-        }
+        } else tilPassword.error = null
 
         if (confirm != password) {
             tilConfirmPassword.error = "Passwords do not match"
             valid = false
-        } else {
-            tilConfirmPassword.error = null
-        }
+        } else tilConfirmPassword.error = null
+
 
         return valid
     }
 
+    // return type class for checkPassword() to bundle boolean and error message
+    data class passVal(
+        val valid: Boolean,
+        val message: String? = null
+    )
+
+    // password regex validation stuff
+    private fun checkPassword(password: String): passVal {
+        if (password.length < 8)
+            return passVal(false, "Password must be at least 8 characters") // check length
+        if (!password.any { it.isDigit() })
+            return passVal(false, "Password must contain a number") // check if it contains a numbers
+        if (!password.any { it.isUpperCase() })
+            return passVal(false, "Password must contain an uppercase letter") // check if it has an uppercase
+        if (!password.any { it.isLowerCase() })
+            return passVal(false, "Password must contain a lowercase letter") // check if it has a lowercase
+        if (!password.any { !it.isLetterOrDigit() && !it.isWhitespace() })
+            return passVal(false, "Password must contain one special character") // check if it has a special character (space not included)
+
+        return passVal(true, null)
+    }
     // calls registration
     private fun performRegister(email: String, password: String) {
         setLoading(true)
