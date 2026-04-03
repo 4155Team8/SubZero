@@ -26,46 +26,46 @@ class SessionManagerTest {
     }
 
     @Test
-    fun `isLoggedIn returns false when no session saved`() {
+    fun isLoggedInReturnsFalseWhenNoSessionSaved() {
         assertFalse(SessionManager.isLoggedIn(context))
     }
 
     @Test
-    fun `isLoggedIn returns true after saving session`() {
+    fun isLoggedInReturnsTrueAfterSavingSession() {
         SessionManager.saveSession(context, token = "test_token", userId = 1, email = "test@example.com")
         assertTrue(SessionManager.isLoggedIn(context))
     }
 
     @Test
-    fun `getToken returns null when no session saved`() {
+    fun getTokenReturnsNullWhenNoSessionSaved() {
         assertNull(SessionManager.getToken(context))
     }
 
     @Test
-    fun `getToken returns saved token`() {
+    fun getTokenReturnsSavedToken() {
         SessionManager.saveSession(context, token = "abc123", userId = 1, email = "test@example.com")
         assertEquals("abc123", SessionManager.getToken(context))
     }
 
     @Test
-    fun `getUserEmail returns saved email`() {
+    fun getUserEmailReturnsSavedEmail() {
         SessionManager.saveSession(context, token = "abc123", userId = 1, email = "test@example.com")
         assertEquals("test@example.com", SessionManager.getUserEmail(context))
     }
 
     @Test
-    fun `getUserId returns saved user id`() {
+    fun getUserIdReturnsSavedUserID() {
         SessionManager.saveSession(context, token = "abc123", userId = 42, email = "test@example.com")
         assertEquals(42, SessionManager.getUserId(context))
     }
 
     @Test
-    fun `getUserId returns -1 when no session saved`() {
+    fun getUserIDreturnsNeg1WhenNoSessionSaved() {
         assertEquals(-1, SessionManager.getUserId(context))
     }
 
     @Test
-    fun `clearSession removes all saved data`() {
+    fun clearSessionRemovesAllSavedData() {
         SessionManager.saveSession(context, token = "abc123", userId = 1, email = "test@example.com")
         SessionManager.clearSession(context)
 
@@ -76,7 +76,7 @@ class SessionManagerTest {
     }
 
     @Test
-    fun `saveSession overwrites previous session`() {
+    fun saveSessionOverwritesPreviousSession() {
         SessionManager.saveSession(context, token = "old_token", userId = 1, email = "old@example.com")
         SessionManager.saveSession(context, token = "new_token", userId = 2, email = "new@example.com")
 

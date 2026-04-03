@@ -20,43 +20,43 @@ class InsightsActivityTest {
     // normalize func
 
     @Test
-    fun `normaliseToMonthly returns cost times 30 for daily`() {
+    fun normaliseToMonthlyReturnsCostTimes30ForDaily() {
         val result = activity.testNormalise(1.0, "Daily")
         assertEquals(30.0, result, 0.001)
     }
 
     @Test
-    fun `normaliseToMonthly returns cost times 4_33 for weekly`() {
+    fun normaliseToMonthlyReturnsCostTimes433ForWeekly() {
         val result = activity.testNormalise(10.0, "Weekly")
         assertEquals(43.3, result, 0.001)
     }
 
     @Test
-    fun `normaliseToMonthly returns cost times 2_17 for biweekly`() {
+    fun normaliseToMonthlyReturnsCostTimes217ForBiweekly() {
         val result = activity.testNormalise(10.0, "Biweekly")
         assertEquals(21.7, result, 0.001)
     }
 
     @Test
-    fun `normaliseToMonthly returns cost as-is for monthly`() {
+    fun normaliseToMonthlyReturnsCostAsisForMonthly() {
         val result = activity.testNormalise(15.99, "Monthly (30 days)")
         assertEquals(15.99, result, 0.001)
     }
 
     @Test
-    fun `normaliseToMonthly returns cost divided by 12 for yearly`() {
+    fun normaliseToMonthlyReturnsCostDividedBy12ForYearly() {
         val result = activity.testNormalise(120.0, "Yearly")
         assertEquals(10.0, result, 0.001)
     }
 
     @Test
-    fun `normaliseToMonthly returns cost as-is for custom cycle`() {
+    fun normaliseToMonthlyReturnsCostAsisForCustom() {
         val result = activity.testNormalise(9.99, "Every 2 months")
         assertEquals(9.99, result, 0.001)
     }
 
     @Test
-    fun `normaliseToMonthly is case insensitive`() {
+    fun normaliseToMonthlyIsCaseInsensitive() {
         assertEquals(
             activity.testNormalise(10.0, "monthly (30 days)"),
             activity.testNormalise(10.0, "Monthly (30 days)"),
