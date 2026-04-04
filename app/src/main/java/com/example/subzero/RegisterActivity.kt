@@ -74,6 +74,8 @@ class RegisterActivity : AppCompatActivity() {
             tilEmail.error = null
         }
 
+
+        // gonna put all this stuff in a wrapper function for readability
         val passRes = checkPassword(password)
         if (passRes.valid == false) {
             tvPassError.text = "Password strength guidelines: \n"
@@ -143,6 +145,7 @@ class RegisterActivity : AppCompatActivity() {
         }
 
 
+        // all of this stuff is password strength visual cues like the meter and changing password strength colors
         if (passStrength == 0) {
             ivPassMeter.setImageResource(R.drawable.ic_passmeter0)
             tvPassStrength.setTextColor(Color.parseColor("#f70000"))
