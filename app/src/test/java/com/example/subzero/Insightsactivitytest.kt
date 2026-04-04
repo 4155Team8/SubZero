@@ -62,7 +62,7 @@ class InsightsActivityTest {
     }
 
     @Test
-    fun `normaliseToMonthly is case insensitive`() {
+    fun normaliseToMonthlyIsCaseInsensitive() {
         assertEquals(
             normaliseToMonthly(10.0, "monthly (30 days)"),
             normaliseToMonthly(10.0, "Monthly (30 days)"),

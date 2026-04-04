@@ -15,13 +15,13 @@ class DonutChartViewTest {
     private val context = RuntimeEnvironment.getApplication()
 
     @Test
-    fun `slices are empty by default`() {
+    fun slicesAreEmptyByDefault() {
         val view = DonutChartView(context)
         assertTrue(view.slices.isEmpty())
     }
 
     @Test
-    fun `setting slices triggers invalidate and stores values`() {
+    fun settingSlicesTriggersInvalidateAndStoresValues() {
         val view = DonutChartView(context)
         val slices = listOf(
             DonutSlice(50f, Color.RED),
@@ -34,7 +34,7 @@ class DonutChartViewTest {
     }
 
     @Test
-    fun `slice values are stored correctly`() {
+    fun sliceValuesAreStoredCorrectly() {
         val view = DonutChartView(context)
         val slices = listOf(
             DonutSlice(75f, Color.RED),
@@ -46,14 +46,14 @@ class DonutChartViewTest {
     }
 
     @Test
-    fun `setting empty slices is handled without crash`() {
+    fun settingEmptySlicesIsHandledWithoutCrash() {
         val view = DonutChartView(context)
         view.slices = emptyList()
         assertTrue(view.slices.isEmpty())
     }
 
     @Test
-    fun `replacing slices updates the list`() {
+    fun replacingSlicesUpdatesTheList() {
         val view = DonutChartView(context)
         view.slices = listOf(DonutSlice(100f, Color.RED))
         assertEquals(1, view.slices.size)

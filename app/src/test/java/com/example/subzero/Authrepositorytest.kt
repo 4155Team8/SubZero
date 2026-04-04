@@ -40,7 +40,7 @@ class AuthRepositoryTest {
     // login tests vvvv
 
     @Test
-    fun `login returns Success with token on valid credentials`() = runBlocking {
+    fun loginReturnsSuccessWithTokenOnValidCredentials() = runBlocking {
         `when`(mockApiService.login(any())).thenReturn(
             Response.success(
                 LoginResponse("Login successful", "mock_jwt_token", AuthUser(1, "test@example.com"))
@@ -56,7 +56,7 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun `login returns Error on invalid credentials`() = runBlocking {
+    fun loginReturnsErrorOnInvalidCredentials() = runBlocking {
         val errorBody = """{"error":"Invalid email or password"}"""
             .toResponseBody("application/json".toMediaType())
 
@@ -69,7 +69,7 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun `login returns Error on network exception`() = runBlocking {
+    fun loginReturnsErrorOnNetworkException() = runBlocking {
         `when`(mockApiService.login(any())).thenThrow(RuntimeException("Network unavailable"))
 
         val result = AuthRepository.login("test@example.com", "password123")
@@ -81,7 +81,7 @@ class AuthRepositoryTest {
     // registration tests vvvvv
 
     @Test
-    fun `register returns Success on valid data`() = runBlocking {
+    fun registerReturnsSuccessOnValidData() = runBlocking {
         `when`(mockApiService.register(any())).thenReturn(
             Response.success(
                 RegisterResponse("User registered successfully", AuthUser(2, "new@example.com"))
@@ -95,7 +95,7 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun `register returns Error on duplicate email`() = runBlocking {
+    fun registerReturnsErrorOnDuplicateEmail() = runBlocking {
         val errorBody = """{"error":"Email is already registered"}"""
             .toResponseBody("application/json".toMediaType())
 
@@ -108,7 +108,7 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun `register returns Error on network exception`() = runBlocking {
+    fun registerReturnsErrorOnNetworkException() = runBlocking {
         `when`(mockApiService.register(any())).thenThrow(RuntimeException("Timeout"))
 
         val result = AuthRepository.register("test@example.com", "password123")
