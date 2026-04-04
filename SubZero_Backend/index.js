@@ -7,7 +7,8 @@ const {
   getSubscription,
   updateSubscription,
   deleteSubscription,
-  getSubscriptionNeedingReminder
+  getSubscriptionNeedingReminder,
+  generateReminders
 } = require("./subscriptionModel");
 
 const authRoutes = require("./authRoutes");
@@ -79,3 +80,15 @@ app.get('/reminders', async (req,res)=>{
     res.status(500).json({error: err.message});
   }
 });
+
+app.get('/generate-reminders',async (req,res) => {
+  try{
+    const reminders =await generateReminders();
+    res.json(reminders);
+  } catch(err){
+    console.error(err);
+    res.status(500).json({error: 'Failed to generate reminders'});
+  }
+});
+
+

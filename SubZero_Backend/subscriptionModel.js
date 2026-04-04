@@ -38,11 +38,40 @@ const getSubscriptionNeedingReminder= async ()=>{
     return results;
 
 };
+
+const generateReminders = async () => {
+    // subscriptions that need reminders
+    
+
+    const subscriptions = await getSubscriptionNeedingReminder();
+    console.log("DEBUG subscriptions:", subscriptions)
+
+    const generatedReminders= [];
+    for (const sub of subscriptions )
+    {
+        // insert into reminders table
+        const insertQuery='INSERT INTO reminders (subscription_id, reminder_date) VALUES(?,CURDATE())';
+        await db.query(insertQuery,[sub.id]);
+        // update last_reminded_at
+        const updateQuery='UPDATE subscription SET last_reminded_at = NOW() WHERE id=?';
+        await db.query(updateQuery, [sub.id]);
+        const formattedDate = new Date(sub.renewal_date).toLocaleDateString();
+        //store for output
+        generatedReminders.push({
+            subscription_id: sub.id,
+            name: sub.name,
+            message: `Reminder: ${sub.name} renews on ${formattedDate}`
+        });
+        
+    }
+    return generatedReminders;
+};
     
 module.exports = {
     createSubscription,
     getSubscription,
     updateSubscription,
     deleteSubscription,
-    getSubscriptionNeedingReminder
+    getSubscriptionNeedingReminder,
+    generateReminders
 };
