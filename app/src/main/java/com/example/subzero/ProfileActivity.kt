@@ -1,75 +1,79 @@
-package com.example.subzero;
+package com.example.subzero
 
-import android.content.Intent
 import android.os.Bundle
-import android.text.Html
-import android.view.View
-import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import com.example.subzero.network.AuthRepository
-import com.example.subzero.network.AuthResult
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
-import kotlinx.coroutines.launch
+import com.example.subzero.databinding.ActivityProfileBinding
 
 class ProfileActivity : AppCompatActivity() {
 
-    private lateinit var btnSignOut: MaterialButton;
+    private lateinit var binding: ActivityProfileBinding
 
-    // uses onCreate and sets up the view
+    data class UserProfile(
+        val fullName: String,
+        val email: String,
+        val memberSince: String,
+        val totalSaved: String,
+        val notificationsEnabled: Boolean
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_profile)
-        initViews()
-        setupBottomNav()
+        binding = ActivityProfileBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        setupNavigation()
         setupClickListeners()
+        loadProfileData()
     }
 
-    // initiate views
-    private fun initViews() {
+    private fun setupNavigation() {
+        // Since we are in ProfileActivity, highlight the Profile nav item
+        binding.navProfile.isSelected = true
 
-        btnSignOut      = findViewById(R.id.btnSignOut)
+        binding.navManage.setOnClickListener {
+            Toast.makeText(this, "Navigating to Manage...", Toast.LENGTH_SHORT).show()
+        }
 
+        binding.navInsights.setOnClickListener {
+            Toast.makeText(this, "Navigating to Insights...", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.navAlerts.setOnClickListener {
+            Toast.makeText(this, "Navigating to Alerts...", Toast.LENGTH_SHORT).show()
+        }
     }
 
-    // literally just the logout function for when the logout button is clicked
     private fun setupClickListeners() {
-        btnSignOut.setOnClickListener {
-            logout();
+        binding.btnPersonalInfo.setOnClickListener {
+            Toast.makeText(this, "Opening Personal Information...", Toast.LENGTH_SHORT).show()
         }
 
-    }
-
-    // renders bottom nav bar
-    private fun setupBottomNav() {
-        findViewById<LinearLayout>(R.id.navManage).setOnClickListener { /* nothing yet */ }
-        findViewById<LinearLayout>(R.id.navInsights).setOnClickListener { navigateToInsights() }
-        findViewById<LinearLayout>(R.id.navAlerts).setOnClickListener {
-            // no alerts page yet
-        }
-        findViewById<LinearLayout>(R.id.navProfile).setOnClickListener {
-            /* already here*/
+        binding.btnNotifications.setOnClickListener {
+            Toast.makeText(this, "Opening Notification Settings...", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun logout() {
-        // clears the jwt token and info for the user
-        SessionManager.clearSession(this)
+    private fun loadProfileData() {
+        // Simulate data from a repository or database
+        val profile = UserProfile(
+            fullName = "John Doe",
+            email = "john.doe@email.com",
+            memberSince = "Jan 2024",
+            totalSaved = "$127.50",
+            notificationsEnabled = true
+        )
 
-        // create variable called intent with the main page as the page to go to
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        // navigate there
-        startActivity(intent)
-        finish()
-    }
-    private fun navigateToInsights() {
-        startActivity(Intent(this, InsightsActivity::class.java))
+        binding.tvUserName.text = profile.fullName
+        binding.tvUserEmail.text = profile.email
+        binding.tvMemberSinceValue.text = profile.memberSince
+        binding.tvTotalSavedValue.text = profile.totalSaved
+        
+        // Update avatar initials
+        val initials = profile.fullName.split(" ")
+            .mapNotNull { it.firstOrNull()?.toString() }
+            .take(2)
+            .joinToString("")
+        binding.tvAvatarInitials.text = initials
     }
 }
-

@@ -7,6 +7,20 @@
     <string name="next">Next</string>
     <string name="previous">Previous</string>
 
+    <!-- Profile Page Strings -->
+    <string name="profile_title">Profile</string>
+    <string name="profile_subtitle">Manage your account settings</string>
+    <string name="member_since">Member Since</string>
+    <string name="total_saved">Total Saved</string>
+    <string name="account_section">ACCOUNT</string>
+    <string name="personal_info">Personal Information</string>
+    <string name="payment_methods">Payment Methods</string>
+    <string name="notification_settings">Notification Settings</string>
+    <string name="nav_manage">Manage</string>
+    <string name="nav_insights">Insights</string>
+    <string name="nav_alerts">Alerts</string>
+    <string name="nav_profile">Profile</string>
+
     <string name="lorem_ipsum">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris
         volutpat, dolor id interdum ullamcorper, risus dolor egestas lectus, sit amet mattis purus
