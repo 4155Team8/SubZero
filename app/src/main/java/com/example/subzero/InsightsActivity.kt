@@ -66,7 +66,7 @@ open class InsightsActivity : AppCompatActivity() {
         findViewById<LinearLayout>(R.id.navManage).setOnClickListener { /* nothing yet */ }
         findViewById<LinearLayout>(R.id.navInsights).setOnClickListener { /* already here */ }
         findViewById<LinearLayout>(R.id.navAlerts).setOnClickListener {
-            // no alerts page yet
+            navigateToAlerts()
         }
         findViewById<LinearLayout>(R.id.navProfile).setOnClickListener {
             navigateToProfile()
@@ -339,4 +339,8 @@ open class InsightsActivity : AppCompatActivity() {
     private fun navigateToProfile() {
         startActivity(Intent(this, ProfileActivity::class.java))
     }
+    private fun navigateToAlerts() {
+        startActivity(Intent(this, AlertsActivity::class.java))
+    }
+
 }
