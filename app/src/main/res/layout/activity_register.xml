@@ -28,7 +28,7 @@
                 android:layout_height="36dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_trending_up"
-                android:tint="@android:color/white" />
+                app:tint="@android:color/white" />
         </androidx.cardview.widget.CardView>
 
         <TextView
@@ -123,6 +123,16 @@
                     android:textSize="14sp"
                     android:textColor="#444444"
                     android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/tvPassStrength"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Password strength: "
+                    android:textSize="12sp"
+                    android:textColor="#FF0000"
+                    android:visibility="visible"
+                    />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilPassword"
@@ -148,6 +158,31 @@
                         android:inputType="textPassword"
                         android:textSize="14sp" />
                 </com.google.android.material.textfield.TextInputLayout>
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:clipToOutline="true"
+                    android:background="@drawable/rounded_image">
+
+                    <ImageView
+                        android:id="@+id/ivPassMeter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:visibility="visible"
+                        android:src="@drawable/ic_passmeter0"
+                        android:scaleType="centerCrop"/>
+                </FrameLayout>
+                <TextView
+                    android:id="@+id/tvPassError"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    android:layout_marginTop="8dp"
+                    android:textColor="#AAAAEE"
+                    android:text="Password strength guidelines: \n"
+                    />
 
                 <!-- Confirm Password -->
                 <TextView

@@ -37,10 +37,26 @@ CREATE TABLE IF NOT EXISTS subscription (
   user_id INT NOT NULL,
   category_id INT NOT NULL,
   billing_cycle_id INT NOT NULL,
+  
+
+  renewal_date DATE NOT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
+  reminder_days_before INT DEFAULT 3,
+  last_reminded_at TIMESTAMP NULL,
+
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (category_id) REFERENCES category(id),
   FOREIGN KEY (billing_cycle_id) REFERENCES billingcycle(id)
+);
+
+CREATE TABLE IF NOT EXISTS reminders(
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  subscription_id INT NOT NULL,
+  reminder_date DATE NOT NULL,
+  sent_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(subscription_id) REFERENCES subscription(id) ON DELETE CASCADE
 );
