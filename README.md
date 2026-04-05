@@ -44,25 +44,31 @@ An Android application for tracking personal subscriptions, monitoring monthly s
 - Node.js (for the backend server)
 - An Android emulator or physical device running API 26+ (although the medium phone API that comes with android studio works best)
 
-### Backend
-The app connects to a local Node.js server. The emulator reaches it via `10.0.2.2:3000`.
-
-1. Navigate to your backend directory
-2. Install dependencies:
-   ```
-   npm install
-   ```
-3. Start the server:
-   ```
-   node index.js
-   ```
-   The server must be running on port **3000** before launching the app.
-
 ## SQL
 For this project, we use MySQL and our schema is modeled off of that.
 All one has to do is download MySQL Server 8.0 or later, install it,
 run it, and use the schema and seed files as a source, and with the node
 backend running, the app will work as intended.
+
+### Backend
+The app connects to a local Node.js server. The emulator reaches it via `10.0.2.2:3000`.
+
+1. Navigate to the backend directory from the root folder
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Install MySQL Server 8.0 or later
+4. Create a .env file in the backend directory containing your MySQL credentials
+5. Start the server:
+   ```
+   node index.js
+   ```
+   The server must be running on port **3000** before launching the app.
+6. Run these two in the MySQL terminal.
+   ```
+   SOURCE schema.sql; SOURCE seed.sql;
+   ```
 
 ### Android App
 1. Open the project in Android Studio
