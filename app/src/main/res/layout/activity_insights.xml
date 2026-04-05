@@ -244,8 +244,8 @@
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/ic_bell"
-                app:tint="#EEEEEE" />
+                android:src="@drawable/ic_noti_bell"
+                app:tint="#AAAAAA" />
             <TextView
                 android:layout_marginTop="4dp"
                 android:layout_width="wrap_content"

@@ -12,6 +12,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.example.subzero.global.ApiCalls
 import com.example.subzero.network.ApiClient
 import com.example.subzero.network.SubscriptionResponse
 import com.example.subzero.views.DonutChartView
@@ -41,6 +42,7 @@ open class InsightsActivity : AppCompatActivity() {
     private lateinit var tvEmptyChart: TextView
     private lateinit var legendContainer: LinearLayout
     private lateinit var subscriptionsByCategoryContainer: LinearLayout
+    private var calls = ApiCalls()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,29 +80,16 @@ open class InsightsActivity : AppCompatActivity() {
         val token = SessionManager.getToken(this) ?: return
 
         lifecycleScope.launch {
-            try {
                 // grab the subscriptions for the given account
-                val response = ApiClient.instance.getSubscriptions("Bearer $token")
-
-                // error handling
-                if (!response.isSuccessful) {
-                    Toast.makeText(this@InsightsActivity, "Failed to load data", Toast.LENGTH_SHORT).show()
-                    return@launch
-                }
-
+                val subRes = calls.loadSubscriptions(this@InsightsActivity)
                 // create a list w the subscriptions
-                val subscriptions: List<SubscriptionResponse> = response.body() ?: emptyList()
-
+                val subscriptions: List<SubscriptionResponse> = subRes ?: emptyList()
                 // rendering logic
                 if (subscriptions.isEmpty()) {
                     showEmptyState()
                 } else {
                     renderInsights(subscriptions)
                 }
-
-            } catch (e: Exception) {
-                Toast.makeText(this@InsightsActivity, "Network error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-            }
         }
     }
 

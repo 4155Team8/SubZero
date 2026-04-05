@@ -75,7 +75,7 @@ class RegisterActivity : AppCompatActivity() {
         }
 
 
-        // gonna put all this stuff in a wrapper function for readability
+        // TODO: gonna put all this stuff in a wrapper function for readability
         val passRes = checkPassword(password)
         if (passRes.valid == false) {
             tvPassError.text = "Password strength guidelines: \n"
@@ -131,7 +131,7 @@ class RegisterActivity : AppCompatActivity() {
 
         if (!password.any { it.isUpperCase() }) {
             passStrength -= 1
-            curr.messages?.set(2, "• Include an uppercase letten\n")  // check if it has an uppercase
+            curr.messages?.set(2, "• Include an uppercase letter\n")  // check if it has an uppercase
         }
 
         if (!password.any { it.isLowerCase() }) {
@@ -146,6 +146,7 @@ class RegisterActivity : AppCompatActivity() {
 
 
         // all of this stuff is password strength visual cues like the meter and changing password strength colors
+        // TODO: possibly more efficient handling instead of tons of if statements
         if (passStrength == 0) {
             ivPassMeter.setImageResource(R.drawable.ic_passmeter0)
             tvPassStrength.setTextColor(Color.parseColor("#f70000"))

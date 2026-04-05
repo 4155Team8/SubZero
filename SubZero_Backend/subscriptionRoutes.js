@@ -189,4 +189,26 @@ router.delete("/:id", authenticate, async (req, res) => {
     }
 });
 
+// GET /subscriptions/reminders
+router.get("/reminders", authenticate, async (req, res) => {
+    try {
+        const data = await require("./subscriptionModel").getSubscriptionNeedingReminder();
+        res.json(data);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /subscriptions/generate-reminders
+router.get("/generate-reminders", authenticate, async (req, res) => {
+    try {
+        const reminders = await require("./subscriptionModel").generateReminders();
+        res.json(reminders);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to generate reminders" });
+    }
+});
+
 module.exports = router;

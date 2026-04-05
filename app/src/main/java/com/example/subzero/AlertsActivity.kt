@@ -1,88 +1,194 @@
 package com.example.subzero
 
 import android.content.Intent
+import android.graphics.Color
+import android.icu.util.TimeZone
 import android.os.Bundle
+import android.util.Log
+import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import com.example.subzero.global.ApiCalls
+import com.example.subzero.network.AlertResponse
+import com.example.subzero.network.ApiClient
+import kotlinx.coroutines.launch
+import org.w3c.dom.Text
+import java.text.SimpleDateFormat
+import java.util.*
+import com.example.subzero.global.Utility
+class AlertsActivity : AppCompatActivity() {
+    private lateinit var remindersContainer : androidx.cardview.widget.CardView
+    private lateinit var remindersList : LinearLayout
+    private lateinit var tvNewAlerts : TextView
+    private var util = Utility()
+    private var calls = ApiCalls()
 
-class AlertsActivity : AppCompatActivity(){
-
-    override fun onCreate(savedInstanceState: Bundle?){
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_alerts)
+        setContentView(R.layout.activity_alerts) // telling app to draw activity_alerts.xml
+        initViews() // initiates views
+        setupBottomNav()
+        loadAlerts()
+    }
 
-        //Bottom Navigation Buttons
+    private fun initViews() {
+        // TODO: CONVERT TO LATEINIT
         val navManage = findViewById<LinearLayout>(R.id.navManage)
         val navInsights = findViewById<LinearLayout>(R.id.navInsights)
         val navAlerts = findViewById<LinearLayout>(R.id.navAlerts)
         val navProfile = findViewById<LinearLayout>(R.id.navProfile)
 
-        //Navigation clicks
-        navManage.setOnClickListener{
-            //Navigate to Manage Screen
-            Toast.makeText(this, "Manage clicked", Toast.LENGTH_SHORT).show()
+        remindersContainer = findViewById(R.id.remindersContainer)
+        remindersList = findViewById(R.id.remindersList)
+        tvNewAlerts = findViewById(R.id.tvNewAlerts)
+    }
+
+    private fun setupBottomNav() {
+        findViewById<LinearLayout>(R.id.navManage).setOnClickListener { /* nothing yet */ }
+        findViewById<LinearLayout>(R.id.navInsights).setOnClickListener { navigateToInsights() }
+        findViewById<LinearLayout>(R.id.navAlerts).setOnClickListener { /* already here */ }
+        findViewById<LinearLayout>(R.id.navProfile).setOnClickListener { navigateToProfile() }
+    }
+    private fun renderAlerts(alerts: List<AlertResponse>) {
+        remindersList.removeAllViews()
+
+        val dp = resources.displayMetrics.density
+        alerts.forEach { alert ->
+            val alertView = buildAlerts(alert, dp)
+            remindersList.addView(alertView)
         }
-        navInsights.setOnClickListener{
-            //Navigate to Insights Screen
-            navigateToInsights()
+    }
+    private fun loadAlerts() {
+        val token = SessionManager.getToken(this) ?: return
+
+        lifecycleScope.launch {
+
+                // grab alerts
+                val alerts = calls.loadReminders(this@AlertsActivity)
+
+                // create list
+                val reminders: List<AlertResponse> = alerts ?: emptyList()
+
+                // rendering stuff
+                if (reminders.isEmpty()) {
+                    showEmptyState()
+                } else {
+                    tvNewAlerts.text = reminders.size.toString() + " new"
+                    renderAlerts(reminders)
+                }
         }
-        navAlerts.setOnClickListener{
-            //Navigate to Alerts Screen
-            Toast.makeText(this, "Already on Alerts", Toast.LENGTH_SHORT).show()
-        }
-        navProfile.setOnClickListener{
-            //Navigate to Profile Screen
-            val intent = Intent(this, ProfileActivity::class.java)
-            startActivity(intent)
-            Toast.makeText(this, "Profile clicked", Toast.LENGTH_SHORT).show()
+    }
+
+
+    private fun showEmptyState() {
+        // TODO: ADD EMPTY PLACEHOLDERS
+    }
+
+    private fun buildAlerts(alert: AlertResponse, dp: Float): View {
+        // Card container for each alert
+        val card = CardView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).also {
+                it.topMargin = (16 * dp).toInt() // spacing between cards
+            }
+            radius = 16 * dp
+            cardElevation = 2 * dp
+            useCompatPadding = true
+            setPadding((24 * dp).toInt(), 0, 0, 0) // left indent
         }
 
-        // Notification Card Toggle Logic
-        val cardNotifications = findViewById<androidx.cardview.widget.CardView>(R.id.cardNotifications)
-        val rlNotificationBackground = findViewById<android.widget.RelativeLayout>(R.id.rlNotificationBackground)
-        val tvNotificationStatus = findViewById<TextView>(R.id.tvNotificationStatus)
-        val tvNotificationDesc = findViewById<TextView>(R.id.tvNotificationDesc)
-        
-        var isNotificationsEnabled = true
+        // Content inside the card
+        val content = RelativeLayout(this).apply {
+            val padding = (16 * dp).toInt()
+            layoutParams = RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.MATCH_PARENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+            )
+            setPadding(padding, padding, padding, padding)
+        }
 
-        cardNotifications.setOnClickListener {
-            isNotificationsEnabled = !isNotificationsEnabled
-            
-            if (isNotificationsEnabled) {
-                // Enabled state
-                rlNotificationBackground.setBackgroundResource(R.drawable.gradient_background)
-                tvNotificationStatus.text = "Notifications Enabled"
-                tvNotificationDesc.text = "You'll be notified 3 days before renewals"
-                tvNotificationStatus.setTextColor(android.graphics.Color.WHITE)
-                tvNotificationDesc.setTextColor(android.graphics.Color.parseColor("#E0E0E0"))
-            } else {
-                // Disabled state
-                rlNotificationBackground.setBackgroundColor(android.graphics.Color.parseColor("#EEEEEE"))
-                tvNotificationStatus.text = "Notifications Disabled"
-                tvNotificationDesc.text = "You won't receive renewal alerts"
-                tvNotificationStatus.setTextColor(android.graphics.Color.DKGRAY)
-                tvNotificationDesc.setTextColor(android.graphics.Color.GRAY)
+        // Icon
+        val ivIcon = ImageView(this).apply {
+            id = View.generateViewId()
+            layoutParams = RelativeLayout.LayoutParams((40 * dp).toInt(), (40 * dp).toInt())
+            setBackgroundResource(R.drawable.bg_circle_light_blue)
+            setPadding((8 * dp).toInt(), (8 * dp).toInt(), (8 * dp).toInt(), (8 * dp).toInt())
+            setImageResource(R.drawable.ic_calendar)
+            setColorFilter(ContextCompat.getColor(context, R.color.blue_icon))
+        }
+        content.addView(ivIcon)
+
+        // Title
+        val tvTitle = TextView(this).apply {
+            id = View.generateViewId()
+            text = alert.name
+            setTextColor(Color.BLACK)
+            textSize = 16f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            layoutParams = RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                addRule(RelativeLayout.END_OF, ivIcon.id)
+                marginStart = (12 * dp).toInt()
             }
         }
+        content.addView(tvTitle)
 
-        //Example
-        val netflixTitle = findViewById<TextView>(R.id.tvNetflixTitle)
-        val netflixTime = findViewById<TextView>(R.id.tvNetflixTime)
-
-        val warningTitle = findViewById<TextView>(R.id.tvWarningTitle)
-        warningTitle.setOnClickListener{
-            Toast.makeText(this, "Price has increased", Toast.LENGTH_SHORT).show()
+        // Time
+        val tvTime = TextView(this).apply {
+            id = View.generateViewId()
+            text = util.timeAgo(alert.reminder_date)
+            setTextColor(ContextCompat.getColor(context, R.color.gray_text))
+            textSize = 12f
+            layoutParams = RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                addRule(RelativeLayout.ALIGN_PARENT_END)
+            }
         }
+        content.addView(tvTime)
 
+        // Subtitle
+        val tvSubtitle = TextView(this).apply {
+            id = View.generateViewId()
+            text = alert.description
+            setTextColor(ContextCompat.getColor(context, R.color.gray_text))
+            textSize = 13f
+            layoutParams = RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                addRule(RelativeLayout.BELOW, tvTitle.id)
+                addRule(RelativeLayout.END_OF, ivIcon.id)
+                topMargin = (4 * dp).toInt()
+                marginStart = (12 * dp).toInt()
+            }
+        }
+        content.addView(tvSubtitle)
 
+        // Add content to card
+        card.addView(content)
 
-
+        return card
     }
-    private fun navigateToInsights(){
-        val intent = Intent(this, InsightsActivity::class.java)
-        startActivity(intent)
+    private fun navigateToInsights() {
+        startActivity(Intent(this, InsightsActivity::class.java))
     }
-
+    private fun navigateToProfile() {
+        startActivity(Intent(this, ProfileActivity::class.java))
+    }
+    private fun navigateToDashboard() {
+        // nothing yet
+    }
 }
