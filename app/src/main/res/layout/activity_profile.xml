@@ -64,7 +64,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:text="JD"
+                        android:text="NA"
                         android:textColor="@color/white"
                         android:textSize="20sp"
                         android:textStyle="bold"
@@ -128,7 +128,7 @@
                     android:textSize="16sp"
                     android:textStyle="bold"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/tvTotalSavedValue"
+                    app:layout_constraintEnd_toStartOf="@+id/tvTotalSubs"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/tvMemberSinceLabel"
                     tools:ignore="HardcodedText" />
@@ -138,7 +138,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="@string/total_saved"
+                    android:text="Subscriptions Tracking:"
                     android:textColor="#C7D2FE"
                     android:textSize="12sp"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -146,12 +146,12 @@
                     app:layout_constraintTop_toBottomOf="@+id/cardDivider" />
 
                 <TextView
-                    android:id="@+id/tvTotalSavedValue"
+                    android:id="@+id/tvTotalSubs"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:layout_marginBottom="8dp"
-                    android:text="$127.50"
+                    android:text=""
                     android:textColor="@color/white"
                     android:textSize="16sp"
                     android:textStyle="bold"
@@ -269,6 +269,52 @@
                         android:src="@drawable/ic_chevron_right" />
                 </LinearLayout>
 
+                <!-- Sign out button -->
+                <LinearLayout
+                    android:id="@+id/btnSignOut"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp"
+                    app:layout_constraintTop_toTopOf="@id/divider2">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_icon_container"
+                        android:contentDescription="@null"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_signout" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:text="Sign Out"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_chevron_right" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/divider2"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="72dp"
+                    android:background="@color/divider"
+                    app:layout_constraintTop_toBottomOf="@+id/btnNotifications" />
+
             </androidx.constraintlayout.widget.ConstraintLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -326,7 +372,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:contentDescription="@string/nav_insights"
-                android:src="@drawable/ic_insights"
+                android:src="@drawable/ic_trending_up"
                 app:tint="@color/text_secondary" />
 
             <TextView

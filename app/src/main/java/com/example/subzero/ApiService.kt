@@ -17,6 +17,7 @@ data class ErrorResponse(val error: String)
 data class ForgotPasswordRequest(val email: String)
 data class MessageResponse(val message: String)
 
+
 // subscription get
 
 data class SubscriptionResponse(
@@ -27,6 +28,23 @@ data class SubscriptionResponse(
     val billing_cycle: String,
     val created_at: String,
     val updated_at: String
+)
+
+data class AlertResponse(
+    val id: Int,
+    val subscription_id: Int,
+    val reminder_date: String,
+    val name: String,
+    val description: String,
+    val sent_at: String?,
+    val created_at: String
+)
+data class ProfileResponse(
+    val id: Int,
+    val email: String,
+    val created_at: String,
+    val name: String?,
+    val reminders_enabled: Int
 )
 
 // interface
@@ -46,4 +64,14 @@ interface ApiService {
     suspend fun getSubscriptions(
         @Header("Authorization") token: String
     ): Response<List<SubscriptionResponse>>
+
+    @GET("reminders")
+    suspend fun getReminders(
+        @Header("Authorization") token : String
+    ): Response<List<AlertResponse>>
+
+    @GET("profile")
+    suspend fun getProfile(
+        @Header("Authorization") token: String
+    ): Response<ProfileResponse>
 }

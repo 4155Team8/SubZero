@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:padding="20dp">
+
+    <!-- Top Bar -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/topBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Back Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBack"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:backgroundTint="#e6e6e6"
+            android:contentDescription="back"
+            app:icon="@drawable/ic_back"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="35dp"
+            android:padding="0dp"
+            app:cornerRadius="30dp"
+            app:strokeWidth="0dp"
+            app:iconTint="@color/black"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/tvPersonalInfoTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-black"
+            android:text="Personal Info"
+            android:textColor="@color/text_primary"
+            android:textSize="28sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/btnBack" />
+
+        <!-- Subtitle -->
+        <TextView
+            android:id="@+id/tvPersonalInfoSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Manage your information"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="@id/tvPersonalInfoTitle"
+            app:layout_constraintTop_toBottomOf="@id/tvPersonalInfoTitle"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Form -->
+    <LinearLayout
+        android:id="@+id/formLayout"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:paddingTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/topBar"
+        app:layout_constraintBottom_toTopOf="@id/btnSaveChanges"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Name -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Name"
+            android:textSize="14sp"
+            android:textColor="#444444"
+            android:textStyle="bold" />
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilName"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxStrokeColor="#E0E0E0"
+            app:boxStrokeWidth="1dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Ex. John Smith"
+                android:inputType="textPersonName"
+                android:textSize="14sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Email -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Email"
+            android:textSize="14sp"
+            android:textColor="#444444"
+            android:textStyle="bold" />
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilEmail"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxStrokeColor="#E0E0E0"
+            app:boxStrokeWidth="1dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Ex. johnsmith@yahoo.com"
+                android:inputType="textEmailAddress"
+                android:textSize="14sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Password -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Password"
+            android:textSize="14sp"
+            android:textColor="#444444"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/tvPassStrength"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Password strength: "
+            android:textSize="12sp"
+            android:textColor="#FF0000"
+            android:visibility="visible"
+            />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilPassword"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:startIconDrawable="@drawable/ic_lock"
+            app:startIconTint="#AAAAAA"
+            app:endIconMode="password_toggle"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxStrokeColor="#E0E0E0"
+            app:boxStrokeWidth="1dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="At least 8 characters"
+                android:inputType="textPassword"
+                android:textSize="14sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:clipToOutline="true"
+            android:background="@drawable/rounded_image">
+
+            <ImageView
+                android:id="@+id/ivPassMeter"
+                android:layout_width="371dp"
+                android:layout_height="wrap_content"
+                android:paddingTop="0dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_passmeter0"
+                android:visibility="visible" />
+        </FrameLayout>
+        <TextView
+            android:id="@+id/tvPassError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:visibility="gone"
+            android:layout_marginTop="8dp"
+            android:textColor="#AAAAEE"
+            android:text="Password strength guidelines: \n"
+            />
+
+    </LinearLayout>
+
+    <!-- Save Changes Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSaveChanges"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="Save Changes"
+        android:textSize="16sp"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
+        android:layout_marginTop="24dp"
+        app:backgroundTint="@null"
+        android:layout_marginBottom="0dp"
+        android:background="@drawable/btn_gradient"
+        app:cornerRadius="14dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+</androidx.constraintlayout.widget.ConstraintLayout>
