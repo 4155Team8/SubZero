@@ -71,10 +71,10 @@ class AlertsActivity : AppCompatActivity() {
         lifecycleScope.launch {
 
                 // grab alerts
-                val profile = calls.loadProfile(this@AlertsActivity)
+                val alerts = calls.loadReminders(this@AlertsActivity)
 
                 // create list
-                val reminders: List<AlertResponse> = profile?.reminders ?: emptyList()
+                val reminders: List<AlertResponse> = alerts ?: emptyList()
 
                 // rendering stuff
                 if (reminders.isEmpty()) {

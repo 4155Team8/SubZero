@@ -19,3 +19,4 @@ local.properties
 .idea/markdown.xml
 SubZero_Backend/package.json
 SubZero_Backend/node_modules
+SubZero_Backend/.env

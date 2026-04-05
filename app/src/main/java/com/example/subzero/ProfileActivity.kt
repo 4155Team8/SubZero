@@ -95,18 +95,19 @@ class ProfileActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             val profile = calls.loadProfile(this@ProfileActivity)
-
+            val subRes = calls.loadSubscriptions(this@ProfileActivity)
+                Log.d("current email", ": " + profile?.email)
                 val email = profile?.email ?: "Not available"
                 val name = profile?.name ?: "John Doe"
-                val remindersEnabled = profile?.remindersEnabled
-                val memberSince = profile?.createdAt
-                val subs: List<SubscriptionResponse> = profile?.subscriptions ?: emptyList()
-                val numSubs = profile?.numSubs
+                val remindersEnabled = profile?.reminders_enabled == 1
+                val memberSince = profile?.created_at
+                val subs: List<SubscriptionResponse> = subRes ?: emptyList()
+                val numSubs = subs.size
 
                 val userProfile = UserProfile(
                     fullName = name,
                     email = email,
-                    memberSince = memberSince,
+                    memberSince = util.formatToMonthYear(memberSince),
                     numSubs = numSubs,
                     notificationsEnabled = remindersEnabled
                 )

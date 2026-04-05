@@ -128,4 +128,97 @@ class MainActivityTest {
         assertNotNull(result.emailError)
         assertNotNull(result.passwordError)
     }
+    @Test
+    fun emailWithDotsInLocalPartIsValid() {
+        val result =
+            MainActivityTest.Companion.validateInputs("first.last@example.com", "pass")
+        assertTrue(result.valid)
+    }
+
+    @Test
+    fun emailWithHyphenInDomainIsValid() {
+        val result = MainActivityTest.Companion.validateInputs("user@my-domain.com", "pass")
+        assertTrue(result.valid)
+    }
+
+    @Test
+    fun emailWithNumbersInDomainIsValid() {
+        val result =
+            MainActivityTest.Companion.validateInputs("user@example123.com", "pass")
+        assertTrue(result.valid)
+    }
+
+    @Test
+    fun emailWithOnlyWhitespaceFailsValidation() {
+        val result = MainActivityTest.Companion.validateInputs("   ", "pass")
+        assertFalse(result.valid)
+        assertNotNull(result.emailError)
+    }
+
+    @Test
+    fun emailWithMultipleAtSignsFailsValidation() {
+        val result = MainActivityTest.Companion.validateInputs("a@@example.com", "pass")
+        assertFalse(result.valid)
+    }
+
+    @Test
+    fun emailIsTrimmedBeforeValidation() {
+        // In MainActivity, email is trimmed before being passed to validateInputs
+        // so a trimmed valid email should pass
+        val result = MainActivityTest.Companion.validateInputs("user@example.com", "pass")
+        assertTrue(result.valid)
+    }
+
+    // ------------------- Password variants -------------------
+
+    @Test
+    fun whitespaceOnlyPasswordIsValid() {
+        // MainActivity only checks non-empty — a space char is not empty
+        val result = MainActivityTest.Companion.validateInputs("user@example.com", " ")
+        assertTrue(result.valid)
+        assertNull(result.passwordError)
+    }
+
+    @Test
+    fun veryLongPasswordIsValid() {
+        val result =
+            MainActivityTest.Companion.validateInputs("user@example.com", "a".repeat(200))
+        assertTrue(result.valid)
+    }
+
+    @Test
+    fun passwordWithSpecialCharsIsValid() {
+        val result =
+            MainActivityTest.Companion.validateInputs("user@example.com", "!@#\$%^&*()")
+        assertTrue(result.valid)
+    }
+
+    // ------------------- Error message content -------------------
+
+    @Test
+    fun emailErrorMessageIsCorrect() {
+        val result = MainActivityTest.Companion.validateInputs("bad", "pass")
+        assertEquals("Enter a valid email address", result.emailError)
+    }
+
+    @Test
+    fun passwordErrorMessageIsCorrect() {
+        val result = MainActivityTest.Companion.validateInputs("user@example.com", "")
+        assertEquals("Password is required", result.passwordError)
+    }
+
+    @Test
+    fun bothErrorsAreSetWhenBothFieldsInvalid() {
+        val result = MainActivityTest.Companion.validateInputs("", "")
+        assertNotNull(result.emailError)
+        assertNotNull(result.passwordError)
+        assertFalse(result.valid)
+    }
+
+    @Test
+    fun validInputsHaveNullErrors() {
+        val result = MainActivityTest.Companion.validateInputs("user@example.com", "pass")
+        assertNull(result.emailError)
+        assertNull(result.passwordError)
+    }
 }

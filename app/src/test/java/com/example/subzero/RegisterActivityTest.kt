@@ -240,4 +240,163 @@ class RegisterActivityTest {
             assertEquals("Failed for: $pwd", "", result.messages?.get(4))
         }
     }
+    @Test
+    fun emptyPasswordScoresNegativeAndIsInvalid() {
+        val result = RegisterActivityTest.Companion.checkPassword("")
+        assertTrue((result.strength ?: 0) < 3)
+        assertEquals(false, result.valid)
+    }
+
+    @Test
+    fun passwordWithOnlySpacesHasNoSpecialChar() {
+        // spaces are whitespace — excluded from special char check
+        val result = RegisterActivityTest.Companion.checkPassword("        ")  // 8 spaces
+        assertTrue(result.messages?.get(4)?.contains("special character") == true)
+    }
+
+    @Test
+    fun passwordWithAllCriteriaMetHasNoErrorMessages() {
+        val result = RegisterActivityTest.Companion.checkPassword("Abcdef1!")
+        result.messages?.forEach { assertEquals("", it) }
+    }
+
+    @Test
+    fun passwordMissingUpperAndDigitScores3() {
+        // "abcdef!g" — length OK, has lower, has special, missing upper(-1), missing digit(-1) => 3
+        val result = RegisterActivityTest.Companion.checkPassword("abcdef!g")
+        assertEquals(3, result.strength)
+        assertEquals(true, result.valid)
+    }
+
+    @Test
+    fun passwordMissingAllButLengthScores1() {
+        // "abcdefgh" — length OK, has lower, no upper(-1), no digit(-1), no special(-1) => 2
+        val result = RegisterActivityTest.Companion.checkPassword("abcdefgh")
+        assertEquals(2, result.strength)
+        assertEquals(false, result.valid)
+    }
+
+    @Test
+    fun singleDigitPasswordIsInvalid() {
+        val result = RegisterActivityTest.Companion.checkPassword("1")
+        assertEquals(false, result.valid)
+    }
+
+    @Test
+    fun veryLongPasswordWithAllCriteriaScores5() {
+        val result = RegisterActivityTest.Companion.checkPassword("Abcdef1!".repeat(10))
+        assertEquals(5, result.strength)
+        assertEquals(true, result.valid)
+    }
+
+    // ------------------- Error message index correctness -------------------
+
+    @Test
+    fun lengthErrorIsAtIndex0() {
+        val result = RegisterActivityTest.Companion.checkPassword("A1!")
+        assertTrue(result.messages?.get(0)?.contains("longer") == true)
+    }
+
+    @Test
+    fun digitErrorIsAtIndex1() {
+        val result = RegisterActivityTest.Companion.checkPassword("Abcdefgh!")
+        assertTrue(result.messages?.get(1)?.contains("number") == true)
+    }
+
+    @Test
+    fun uppercaseErrorIsAtIndex2() {
+        val result = RegisterActivityTest.Companion.checkPassword("abcdef1!")
+        assertTrue(result.messages?.get(2)?.contains("uppercase") == true)
+    }
+
+    @Test
+    fun lowercaseErrorIsAtIndex3() {
+        val result = RegisterActivityTest.Companion.checkPassword("ABCDEF1!")
+        assertTrue(result.messages?.get(3)?.contains("lowercase") == true)
+    }
+
+    @Test
+    fun specialCharErrorIsAtIndex4() {
+        val result = RegisterActivityTest.Companion.checkPassword("Abcdef12")
+        assertTrue(result.messages?.get(4)?.contains("special character") == true)
+    }
+
+    // ------------------- No false error messages -------------------
+
+    @Test
+    fun passwordMeetingAllCriteriaHasEmptyLengthError() {
+        val result = RegisterActivityTest.Companion.checkPassword("Abcdef1!")
+        assertEquals("", result.messages?.get(0))
+    }
+
+    @Test
+    fun passwordWithDigitHasEmptyDigitError() {
+        val result = RegisterActivityTest.Companion.checkPassword("Abcdef1!")
+        assertEquals("", result.messages?.get(1))
+    }
+
+    @Test
+    fun passwordWithUppercaseHasEmptyUppercaseError() {
+        val result = RegisterActivityTest.Companion.checkPassword("Abcdef1!")
+        assertEquals("", result.messages?.get(2))
+    }
+
+    @Test
+    fun passwordWithLowercaseHasEmptyLowercaseError() {
+        val result = RegisterActivityTest.Companion.checkPassword("Abcdef1!")
+        assertEquals("", result.messages?.get(3))
+    }
+
+    @Test
+    fun passwordWithSpecialCharHasEmptySpecialCharError() {
+        val result = RegisterActivityTest.Companion.checkPassword("Abcdef1!")
+        assertEquals("", result.messages?.get(4))
+    }
+
+    // ------------------- Password matching edge cases -------------------
+
+    @Test
+    fun singleCharPasswordMatchesItself() {
+        assertTrue(RegisterActivityTest.Companion.passwordsMatch("x", "x"))
+    }
+
+    @Test
+    fun unicodePasswordsMatch() {
+        assertTrue(
+            RegisterActivityTest.Companion.passwordsMatch(
+                "Pässwörd1!",
+                "Pässwörd1!"
+            )
+        )
+    }
+
+    @Test
+    fun unicodePasswordsDontMatchWhenDifferent() {
+        assertFalse(
+            RegisterActivityTest.Companion.passwordsMatch(
+                "Pässwörd1!",
+                "Password1!"
+            )
+        )
+    }
+
+    @Test
+    fun whitespaceDifferenceBreaksMatch() {
+        assertFalse(
+            RegisterActivityTest.Companion.passwordsMatch(
+                "Password1!",
+                " Password1!"
+            )
+        )
+    }
+
+    @Test
+    fun trailingNewlineBreaksMatch() {
+        assertFalse(
+            RegisterActivityTest.Companion.passwordsMatch(
+                "Password1!",
+                "Password1!\n"
+            )
+        )
+    }
 }

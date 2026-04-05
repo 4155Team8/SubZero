@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const { registerUser, loginUser } = require("./userModel");
 const { sendPasswordResetEmail } = require("./emailService");
 const db = require("./db");
+const { verifyToken } = require("./authMiddleware");
 
 const JWT_SECRET    = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -165,5 +166,63 @@ router.post("/reset-password", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+
+router.post("/new-email", verifyToken, async (req, res) => {
+    const { email } = req.body
+    const id = req.user.id
+    console.log("updating email for user id:", id, "to:", email);
+
+    if (!email || typeof email !== "string" || email.trim() === "") {
+        return res.status(400).json({ error: "Email is required" });
+    }
+
+    try {
+        const user = await updateEmail({ email: email.trim(), id });
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.status(200).json({ message: "Email updated successfully", user });
+    } catch (err) {
+            console.error(err)
+            res.status(500).json({ error: err.message });
+    }
+})
+
+async function updateEmail({ email, id }) {
+    const [result] = await db.query(
+        "UPDATE users SET email = ? WHERE id = ?",
+        [email, id]
+    );
+    if (result.affectedRows === 0) return null;
+    return { email, id };
+}
+
+
+router.post("/new-password", verifyToken, async (req, res) => {
+    const { password } = req.body
+    const id = req.user.id
+
+    if (!password || typeof password !== "string" || password.trim() === "") {
+        return res.status(400).json({ error: "Password is required" });
+    }
+
+    try {
+        const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+        const user = await updatePassword({ password_hash, id });
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.status(200).json({ message: "Password updated successfully", user });
+    } catch (err) {
+            console.error(err)
+            res.status(500).json({ error: err.message });
+    }
+})
+
+async function updatePassword({ password_hash, id }) {
+    const [result] = await db.query(
+        "UPDATE users SET password_hash = ? WHERE id = ?",
+        [password_hash, id]
+    );
+    if (result.affectedRows === 0) return null;
+    return { password_hash, id };
+}
 
 module.exports = router;

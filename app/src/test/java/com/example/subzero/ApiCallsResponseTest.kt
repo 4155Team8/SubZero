@@ -52,6 +52,14 @@ class ApiCallsResponseTest {
         createdAt: String = "2024-01-01T00:00:00.000Z"
     ) = AlertResponse(id, subscriptionId, reminderDate, name, description, sentAt, createdAt)
 
+    private fun makeSub(
+        id: Int = 1,
+        name: String = "Netflix",
+        cost: Double = 12.99,
+        category: String = "Entertainment",
+        billingCycle: String = "monthly"
+    ) = SubscriptionResponse(id, name, cost, category, billingCycle, "2024-01-01", "2024-01-01")
+
     // ------------------- Default fallback values -------------------
 
     @Test
@@ -196,4 +204,120 @@ class ApiCallsResponseTest {
         val profile = buildProfile(createdAt = null)
         assertNull(profile.createdAt)
     }
+    // ------------------- Fallback values -------------------
+
+    @Test
+    fun remindersEnabledFlag2MapsToFalse() {
+        val profile = buildProfile(remindersEnabledFlag = 2)
+        assertEquals(false, profile.remindersEnabled)
+    }
+
+    @Test
+    fun remindersEnabledFlagNegativeMapsToFalse() {
+        val profile = buildProfile(remindersEnabledFlag = -1)
+        assertEquals(false, profile.remindersEnabled)
+    }
+
+    @Test
+    fun emailFallbackIsNotAvailable() {
+        assertEquals("Not available", buildProfile(email = null).email)
+    }
+
+    @Test
+    fun nameFallbackIsJohnDoe() {
+        assertEquals("John Doe", buildProfile(name = null).name)
+    }
+
+    // ------------------- numSubs derived value -------------------
+
+    @Test
+    fun numSubsWithThreeSubscriptionsIsThree() {
+        val subs = listOf(makeSub(1), makeSub(2), makeSub(3))
+        assertEquals(3, buildProfile(subscriptions = subs).numSubs)
+    }
+
+    @Test
+    fun numSubsWithTenSubscriptionsIsTen() {
+        val subs = (1..10).map { makeSub(it) }
+        assertEquals(10, buildProfile(subscriptions = subs).numSubs)
+    }
+
+    @Test
+    fun subscriptionsListIsPreservedOnProfile() {
+        val subs = listOf(makeSub(1, "Netflix"), makeSub(2, "Spotify"))
+        val profile = buildProfile(subscriptions = subs)
+        assertEquals(2, profile.subscriptions?.size)
+        assertEquals("Netflix", profile.subscriptions?.get(0)?.name)
+        assertEquals("Spotify", profile.subscriptions?.get(1)?.name)
+    }
+
+    @Test
+    fun subscriptionCostIsPreserved() {
+        val subs = listOf(makeSub(1, cost = 99.99))
+        assertEquals(99.99, buildProfile(subscriptions = subs).subscriptions?.first()?.cost)
+    }
+
+    @Test
+    fun subscriptionBillingCycleIsPreserved() {
+        val subs = listOf(makeSub(1, billingCycle = "yearly"))
+        assertEquals("yearly", buildProfile(subscriptions = subs).subscriptions?.first()?.billing_cycle)
+    }
+
+    @Test
+    fun subscriptionCategoryIsPreserved() {
+        val subs = listOf(makeSub(1, category = "Productivity"))
+        assertEquals("Productivity", buildProfile(subscriptions = subs).subscriptions?.first()?.category)
+    }
+
+    // ------------------- Reminders list detail -------------------
+
+    @Test
+    fun multipleRemindersAreAllPreserved() {
+        val alerts = (1..5).map { makeAlert(id = it) }
+        val profile = buildProfile(reminders = alerts)
+        assertEquals(5, profile.reminders?.size)
+    }
+
+    @Test
+    fun reminderOrderIsPreserved() {
+        val alerts = listOf(makeAlert(id = 1, name = "First"), makeAlert(id = 2, name = "Second"))
+        val profile = buildProfile(reminders = alerts)
+        assertEquals("First",  profile.reminders?.get(0)?.name)
+        assertEquals("Second", profile.reminders?.get(1)?.name)
+    }
+
+    @Test
+    fun reminderCreatedAtIsPreserved() {
+        val alert = makeAlert(createdAt = "2023-05-10T12:00:00.000Z")
+        val profile = buildProfile(reminders = listOf(alert))
+        assertEquals("2023-05-10T12:00:00.000Z", profile.reminders?.first()?.created_at)
+    }
+
+    @Test
+    fun sentAtNonNullIsPreserved() {
+        val alert = makeAlert(sentAt = "2024-07-01T08:00:00.000Z")
+        val profile = buildProfile(reminders = listOf(alert))
+        assertEquals("2024-07-01T08:00:00.000Z", profile.reminders?.first()?.sent_at)
+    }
+
+    // ------------------- Mixed subscriptions and reminders -------------------
+
+    @Test
+    fun profileWithBothSubsAndRemindersIsCorrect() {
+        val subs    = listOf(makeSub(1), makeSub(2))
+        val alerts  = listOf(makeAlert(1), makeAlert(2), makeAlert(3))
+        val profile = buildProfile(subscriptions = subs, reminders = alerts)
+        assertEquals(2, profile.numSubs)
+        assertEquals(3, profile.reminders?.size)
+    }
+
+    @Test
+    fun profileNumSubsDoesNotCountReminders() {
+        val subs   = listOf(makeSub(1))
+        val alerts = listOf(makeAlert(1), makeAlert(2))
+        val profile = buildProfile(subscriptions = subs, reminders = alerts)
+        assertEquals(1, profile.numSubs)
+    }
 }
+
+

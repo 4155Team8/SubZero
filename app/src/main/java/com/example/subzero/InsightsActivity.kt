@@ -81,9 +81,9 @@ open class InsightsActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
                 // grab the subscriptions for the given account
-                val profile = calls.loadProfile(this@InsightsActivity)
+                val subRes = calls.loadSubscriptions(this@InsightsActivity)
                 // create a list w the subscriptions
-                val subscriptions: List<SubscriptionResponse> = profile?.subscriptions ?: emptyList()
+                val subscriptions: List<SubscriptionResponse> = subRes ?: emptyList()
                 // rendering logic
                 if (subscriptions.isEmpty()) {
                     showEmptyState()

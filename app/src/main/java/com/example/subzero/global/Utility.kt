@@ -31,7 +31,7 @@ class Utility {
 
 
     // pulls date and tells how long ago (or in the future) it is
-    public fun timeAgo(isoString: String): String {
+    public fun timeAgo(isoString: String?): String? {
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
         sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
 

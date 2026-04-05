@@ -116,4 +116,121 @@ class AuthRepositoryTest {
         assertTrue("Expected Error but got: $result", result is AuthResult.Error)
         assertTrue((result as AuthResult.Error).message.contains("Network error"))
     }
+    // ------------------- Login: token content -------------------
+
+    @Test
+    fun loginSuccessPreservesUserIdFromResponse() = runBlocking {
+        `when`(mockApiService.login(any())).thenReturn(
+            Response.success(LoginResponse("OK", "tok", AuthUser(99, "a@b.com")))
+        )
+        val result = AuthRepository.login("a@b.com", "pass")
+        assertEquals(99, (result as AuthResult.Success).data.user.id)
+    }
+
+    @Test
+    fun loginSuccessPreservesMessageFromResponse() = runBlocking {
+        `when`(mockApiService.login(any())).thenReturn(
+            Response.success(LoginResponse("Login successful", "tok", AuthUser(1, "a@b.com")))
+        )
+        val result = AuthRepository.login("a@b.com", "pass")
+        assertEquals("Login successful", (result as AuthResult.Success).data.message)
+    }
+
+    @Test
+    fun loginSuccessTokenIsNotEmpty() = runBlocking {
+        `when`(mockApiService.login(any())).thenReturn(
+            Response.success(LoginResponse("OK", "real_token_here", AuthUser(1, "a@b.com")))
+        )
+        val result = AuthRepository.login("a@b.com", "pass")
+        assertTrue((result as AuthResult.Success).data.token.isNotEmpty())
+    }
+
+    // ------------------- Login: HTTP error codes -------------------
+
+    @Test
+    fun loginReturnsErrorOn403Forbidden() = runBlocking {
+        val errorBody = """{"error":"Forbidden"}""".toResponseBody("application/json".toMediaType())
+        `when`(mockApiService.login(any())).thenReturn(Response.error(403, errorBody))
+        val result = AuthRepository.login("a@b.com", "pass")
+        assertTrue(result is AuthResult.Error)
+        assertEquals("Forbidden", (result as AuthResult.Error).message)
+    }
+
+    @Test
+    fun loginReturnsErrorOn500ServerError() = runBlocking {
+        val errorBody = """{"error":"Internal server error"}""".toResponseBody("application/json".toMediaType())
+        `when`(mockApiService.login(any())).thenReturn(Response.error(500, errorBody))
+        val result = AuthRepository.login("a@b.com", "pass")
+        assertTrue(result is AuthResult.Error)
+    }
+
+    @Test
+    fun loginErrorMessageFallsBackWhenBodyIsNull() = runBlocking {
+        val errorBody = "{}".toResponseBody("application/json".toMediaType())
+        `when`(mockApiService.login(any())).thenReturn(Response.error(401, errorBody))
+        val result = AuthRepository.login("a@b.com", "pass")
+        assertTrue(result is AuthResult.Error)
+        // fallback message when error field is missing
+        assertEquals("Login failed", (result as AuthResult.Error).message)
+    }
+
+    @Test
+    fun loginNetworkErrorMessageContainsNetworkError() = runBlocking {
+        `when`(mockApiService.login(any())).thenThrow(RuntimeException("Timeout"))
+        val result = AuthRepository.login("a@b.com", "pass")
+        assertTrue((result as AuthResult.Error).message.startsWith("Network error"))
+    }
+
+    // ------------------- Register: HTTP error codes -------------------
+
+    @Test
+    fun registerSuccessPreservesUserEmail() = runBlocking {
+        `when`(mockApiService.register(any())).thenReturn(
+            Response.success(RegisterResponse("OK", AuthUser(5, "new@example.com")))
+        )
+        val result = AuthRepository.register("new@example.com", "Pass1!")
+        assertEquals("new@example.com", (result as AuthResult.Success).data.user.email)
+    }
+
+    @Test
+    fun registerSuccessPreservesUserId() = runBlocking {
+        `when`(mockApiService.register(any())).thenReturn(
+            Response.success(RegisterResponse("OK", AuthUser(5, "new@example.com")))
+        )
+        val result = AuthRepository.register("new@example.com", "Pass1!")
+        assertEquals(5, (result as AuthResult.Success).data.user.id)
+    }
+
+    @Test
+    fun registerReturnsErrorOn400BadRequest() = runBlocking {
+        val errorBody = """{"error":"Invalid input"}""".toResponseBody("application/json".toMediaType())
+        `when`(mockApiService.register(any())).thenReturn(Response.error(400, errorBody))
+        val result = AuthRepository.register("bad", "pass")
+        assertTrue(result is AuthResult.Error)
+        assertEquals("Invalid input", (result as AuthResult.Error).message)
+    }
+
+    @Test
+    fun registerReturnsErrorOn500() = runBlocking {
+        val errorBody = """{"error":"Server error"}""".toResponseBody("application/json".toMediaType())
+        `when`(mockApiService.register(any())).thenReturn(Response.error(500, errorBody))
+        val result = AuthRepository.register("a@b.com", "Pass1!")
+        assertTrue(result is AuthResult.Error)
+    }
+
+    @Test
+    fun registerNetworkErrorMessageContainsNetworkError() = runBlocking {
+        `when`(mockApiService.register(any())).thenThrow(RuntimeException("No route to host"))
+        val result = AuthRepository.register("a@b.com", "Pass1!")
+        assertTrue((result as AuthResult.Error).message.startsWith("Network error"))
+    }
+
+    @Test
+    fun registerErrorFallbackMessageWhenBodyMissingField() = runBlocking {
+        val errorBody = "{}".toResponseBody("application/json".toMediaType())
+        `when`(mockApiService.register(any())).thenReturn(Response.error(409, errorBody))
+        val result = AuthRepository.register("a@b.com", "Pass1!")
+        assertTrue(result is AuthResult.Error)
+        assertEquals("Registration failed", (result as AuthResult.Error).message)
+    }
 }

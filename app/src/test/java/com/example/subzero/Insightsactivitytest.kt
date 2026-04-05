@@ -10,17 +10,215 @@ import org.junit.runners.JUnit4
 class InsightsActivityTest {
 
     // Static function to test normaliseToMonthly logic without needing Activity context
-    companion object {
-        fun normaliseToMonthly(cost: Double, billingCycle: String): Double {
-            return when (billingCycle.lowercase()) {
-                "daily" -> cost * 30
-                "weekly" -> cost * 4.33
-                "biweekly" -> cost * 2.17
-                "monthly", "monthly (30 days)" -> cost
-                "yearly" -> cost / 12
-                else -> cost
-            }
+    private fun normaliseToMonthly(cost: Double, billingCycle: String): Double {
+        return when {
+            billingCycle.contains("daily",    ignoreCase = true) -> cost * 30
+            billingCycle.contains("biweekly", ignoreCase = true) -> cost * 2.17
+            billingCycle.contains("weekly",   ignoreCase = true) -> cost * 4.33
+            billingCycle.contains("month",    ignoreCase = true) -> cost
+            billingCycle.contains("year",     ignoreCase = true) -> cost / 12
+            else -> cost
         }
+    }
+
+    // ------------------- Billing cycle: daily -------------------
+
+    @Test
+    fun dailyLowercaseMultipliesBy30() {
+        assertEquals(30.0, normaliseToMonthly(1.0, "daily"), 0.001)
+    }
+
+    @Test
+    fun dailyUppercaseMultipliesBy30() {
+        assertEquals(30.0, normaliseToMonthly(1.0, "Daily"), 0.001)
+    }
+
+    @Test
+    fun dailyAllCapsMultipliesBy30() {
+        assertEquals(300.0, normaliseToMonthly(10.0, "DAILY"), 0.001)
+    }
+
+    @Test
+    fun dailyCostZeroStaysZero() {
+        assertEquals(0.0, normaliseToMonthly(0.0, "daily"), 0.001)
+    }
+
+    // ------------------- Billing cycle: weekly -------------------
+
+    @Test
+    fun weeklyMultipliesBy4Point33() {
+        assertEquals(43.3, normaliseToMonthly(10.0, "weekly"), 0.001)
+    }
+
+    @Test
+    fun weeklyMixedCaseMultipliesBy4Point33() {
+        assertEquals(43.3, normaliseToMonthly(10.0, "Weekly"), 0.001)
+    }
+
+    // Biweekly must be checked BEFORE weekly since "biweekly" contains "weekly"
+    @Test
+    fun biweeklyIsNotMatchedByWeeklyBranch() {
+        val biweekly = normaliseToMonthly(10.0, "biweekly")
+        val weekly   = normaliseToMonthly(10.0, "weekly")
+        assertNotEquals(weekly, biweekly, 0.001)
+    }
+
+    // ------------------- Billing cycle: biweekly -------------------
+
+    @Test
+    fun biweeklyMultipliesBy2Point17() {
+        assertEquals(21.7, normaliseToMonthly(10.0, "biweekly"), 0.001)
+    }
+
+    @Test
+    fun biweeklyUppercaseMultipliesBy2Point17() {
+        assertEquals(21.7, normaliseToMonthly(10.0, "Biweekly"), 0.001)
+    }
+
+    // ------------------- Billing cycle: monthly -------------------
+
+    @Test
+    fun monthlyReturnsCostUnchanged() {
+        assertEquals(15.99, normaliseToMonthly(15.99, "monthly"), 0.001)
+    }
+
+    @Test
+    fun monthlyWithParenthesesReturnsCostUnchanged() {
+        assertEquals(15.99, normaliseToMonthly(15.99, "monthly (30 days)"), 0.001)
+    }
+
+    @Test
+    fun monthlyAllCapsReturnsCostUnchanged() {
+        assertEquals(9.99, normaliseToMonthly(9.99, "MONTHLY"), 0.001)
+    }
+
+    @Test
+    fun monthlyWithZeroCostReturnsZero() {
+        assertEquals(0.0, normaliseToMonthly(0.0, "monthly"), 0.001)
+    }
+
+    // ------------------- Billing cycle: yearly -------------------
+
+    @Test
+    fun yearlyDividesCostBy12() {
+        assertEquals(10.0, normaliseToMonthly(120.0, "yearly"), 0.001)
+    }
+
+
+    @Test
+    fun yearlyUppercaseDividesCostBy12() {
+        assertEquals(10.0, normaliseToMonthly(120.0, "Yearly"), 0.001)
+    }
+
+    @Test
+    fun yearlyWithLargeCostDividesCorrectly() {
+        assertEquals(100.0, normaliseToMonthly(1200.0, "yearly"), 0.001)
+    }
+
+    // ------------------- Fallback (unknown cycle) -------------------
+
+    @Test
+    fun unknownCycleReturnsCostUnchanged() {
+        assertEquals(9.99, normaliseToMonthly(9.99, "every 2 months"), 0.001)
+    }
+
+    @Test
+    fun emptyCycleReturnsCostUnchanged() {
+        assertEquals(5.0, normaliseToMonthly(5.0, ""), 0.001)
+    }
+
+    @Test
+    fun randomStringCycleReturnsCostUnchanged() {
+        assertEquals(7.0, normaliseToMonthly(7.0, "quarterly"), 0.001)
+    }
+
+    // ------------------- Monthly total calculation -------------------
+
+    @Test
+    fun monthlyTotalSumsAllSubscriptions() {
+        val subs = listOf(
+            SubscriptionResponse(1, "Netflix",  12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify",  9.99,  "Music",         "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "Adobe",    54.99, "Productivity",  "monthly", "2024-01-01", "2024-01-01")
+        )
+        val total = subs.sumOf { normaliseToMonthly(it.cost, it.billing_cycle) }
+        assertEquals(77.97, total, 0.01)
+    }
+
+    @Test
+    fun monthlyTotalWithMixedCyclesIsCorrect() {
+        val subs = listOf(
+            SubscriptionResponse(1, "Netflix",  12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Adobe",    120.0, "Productivity",  "yearly",  "2024-01-01", "2024-01-01")
+        )
+        val total = subs.sumOf { normaliseToMonthly(it.cost, it.billing_cycle) }
+        assertEquals(22.99, total, 0.01)
+    }
+
+    @Test
+    fun monthlyTotalForEmptyListIsZero() {
+        val total = emptyList<SubscriptionResponse>().sumOf { normaliseToMonthly(it.cost, it.billing_cycle) }
+        assertEquals(0.0, total, 0.001)
+    }
+
+    @Test
+    fun monthlyTotalForSingleSubscriptionIsCorrect() {
+        val subs = listOf(
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01")
+        )
+        val total = subs.sumOf { normaliseToMonthly(it.cost, it.billing_cycle) }
+        assertEquals(12.99, total, 0.001)
+    }
+
+    // ------------------- Category grouping -------------------
+
+    @Test
+    fun singleCategoryGroupsAllSubscriptions() {
+        val subs = listOf(
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Hulu",    7.99,  "Entertainment", "monthly", "2024-01-01", "2024-01-01")
+        )
+        val byCategory = subs.groupBy { it.category }
+        assertEquals(1, byCategory.size)
+        assertEquals(2, byCategory["Entertainment"]?.size)
+    }
+
+    @Test
+    fun multiCategoryGroupsSeparatesCorrectly() {
+        val subs = listOf(
+            SubscriptionResponse(1, "Netflix",  12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify",  9.99,  "Music",         "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0,  "Food",          "monthly", "2024-01-01", "2024-01-01")
+        )
+        val byCategory = subs.groupBy { it.category }
+        assertEquals(3, byCategory.size)
+    }
+
+    @Test
+    fun categoryTotalsAreSortedDescending() {
+        val subs = listOf(
+            SubscriptionResponse(1, "Netflix",  12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Adobe",    54.99, "Productivity",  "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0,  "Food",          "monthly", "2024-01-01", "2024-01-01")
+        )
+        val byCategory = subs.groupBy { it.category }
+        val sorted = byCategory
+            .map { (cat, subList) -> Pair(cat, subList.sumOf { normaliseToMonthly(it.cost, it.billing_cycle) }) }
+            .sortedByDescending { it.second }
+
+        assertEquals("Productivity",  sorted[0].first)
+        assertEquals("Food",          sorted[1].first)
+        assertEquals("Entertainment", sorted[2].first)
+    }
+
+    @Test
+    fun categoryWithOnlyYearlySubHasCorrectMonthlyTotal() {
+        val subs = listOf(
+            SubscriptionResponse(1, "Adobe", 120.0, "Productivity", "yearly", "2024-01-01", "2024-01-01")
+        )
+        val byCategory = subs.groupBy { it.category }
+        val total = byCategory["Productivity"]?.sumOf { normaliseToMonthly(it.cost, it.billing_cycle) } ?: 0.0
+        assertEquals(10.0, total, 0.001)
     }
 
     // ------------------- Tests for Billing Cycle Normalization -------------------

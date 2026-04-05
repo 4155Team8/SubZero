@@ -120,4 +120,147 @@ class UtilityTest {
         val result = utility.timeAgo(isoStringDaysFromNow(-2))
         assertEquals("2 days ago", result)
     }
+    // ------------------- formatToMonthYear: all 12 months -------------------
+
+    @Test
+    fun formatToMonthYearJanuary() {
+        assertEquals("Jan 2024", utility.formatToMonthYear("2024-01-01T00:00:00.000Z"))
+    }
+
+    @Test
+    fun formatToMonthYearFebruary() {
+        assertEquals("Feb 2024", utility.formatToMonthYear("2024-02-15T00:00:00.000Z"))
+    }
+
+    @Test
+    fun formatToMonthYearMarch() {
+        assertEquals("Mar 2024", utility.formatToMonthYear("2024-03-01T00:00:00.000Z"))
+    }
+
+    @Test
+    fun formatToMonthYearApril() {
+        assertEquals("Apr 2024", utility.formatToMonthYear("2024-04-01T00:00:00.000Z"))
+    }
+
+    @Test
+    fun formatToMonthYearMay() {
+        assertEquals("May 2024", utility.formatToMonthYear("2024-05-01T00:00:00.000Z"))
+    }
+
+    @Test
+    fun formatToMonthYearJune() {
+        assertEquals("Jun 2024", utility.formatToMonthYear("2024-06-01T00:00:00.000Z"))
+    }
+
+    @Test
+    fun formatToMonthYearJuly() {
+        assertEquals("Jul 2024", utility.formatToMonthYear("2024-07-01T00:00:00.000Z"))
+    }
+
+    @Test
+    fun formatToMonthYearAugust() {
+        assertEquals("Aug 2024", utility.formatToMonthYear("2024-08-01T00:00:00.000Z"))
+    }
+
+    @Test
+    fun formatToMonthYearSeptember() {
+        assertEquals("Sep 2024", utility.formatToMonthYear("2024-09-01T00:00:00.000Z"))
+    }
+
+    @Test
+    fun formatToMonthYearOctober() {
+        assertEquals("Oct 2024", utility.formatToMonthYear("2024-10-01T00:00:00.000Z"))
+    }
+
+    @Test
+    fun formatToMonthYearNovember() {
+        assertEquals("Nov 2024", utility.formatToMonthYear("2024-11-01T00:00:00.000Z"))
+    }
+
+    @Test
+    fun formatToMonthYearDecember() {
+        assertEquals("Dec 2023", utility.formatToMonthYear("2023-12-01T00:00:00.000Z"))
+    }
+
+    // ------------------- formatToMonthYear: year correctness -------------------
+
+    @Test
+    fun formatToMonthYearYear2020IsCorrect() {
+        assertEquals("Jan 2020", utility.formatToMonthYear("2020-01-01T00:00:00.000Z"))
+    }
+
+    @Test
+    fun formatToMonthYearYear2099IsCorrect() {
+        assertEquals("Dec 2099", utility.formatToMonthYear("2099-12-31T23:59:59.000Z"))
+    }
+
+    @Test
+    fun formatToMonthYearYear2000IsCorrect() {
+        assertEquals("Mar 2000", utility.formatToMonthYear("2000-03-15T00:00:00.000Z"))
+    }
+
+    // ------------------- formatToMonthYear: malformed input -------------------
+
+    @Test
+    fun formatToMonthYearWithDateOnlyStringHandledGracefully() {
+        val result = utility.formatToMonthYear("2024-06-01")
+        // implementation-defined; just must not throw
+        assertTrue(result == null || result == "" || result.isNotEmpty())
+    }
+
+    // ------------------- timeAgo: past -------------------
+
+    @Test
+    fun timeAgoThreeDaysAgoPastIsCorrect() {
+        assertEquals("3 days ago", utility.timeAgo(isoStringDaysFromNow(-3)))
+    }
+
+    @Test
+    fun timeAgoTwentyDaysAgoIsCorrect() {
+        val result = utility.timeAgo(isoStringDaysFromNow(-20))
+        assertEquals("20 days ago", result)
+    }
+
+    @Test
+    fun timeAgoFifteenDaysAgoIsCorrect() {
+        val result = utility.timeAgo(isoStringDaysFromNow(-15))
+        assertEquals("15 days ago", result)
+    }
+    // ------------------- timeAgo: future -------------------
+
+    @Test
+    fun timeAgoThreeDaysInFutureIsCorrect() {
+        assertEquals("In 3 days", utility.timeAgo(isoStringDaysFromNow(3)))
+    }
+
+    @Test
+    fun timeAgoFourteenDaysInFutureIsCorrect() {
+        assertEquals("In 14 days", utility.timeAgo(isoStringDaysFromNow(14)))
+    }
+    // ------------------- timeAgo: boundary between labels -------------------
+
+    @Test
+    fun timeAgoTodayReturnsTodayNotDaysAgo() {
+        val result = utility.timeAgo(isoStringDaysFromNow(0))
+        assertEquals("Today", result)
+    }
+
+    @Test
+    fun timeAgoYesterdayReturnsYesterdayNotDaysAgo() {
+        val result = utility.timeAgo(isoStringDaysFromNow(-1))
+        assertEquals("Yesterday", result)
+    }
+
+    @Test
+    fun timeAgoTomorrowReturnsTomorrowNotInDays() {
+        val result = utility.timeAgo(isoStringDaysFromNow(1))
+        assertEquals("Tomorrow", result)
+    }
+
+    @Test
+    fun timeAgoPastAndFutureResultsAreDifferent() {
+        val past   = utility.timeAgo(isoStringDaysFromNow(-5))
+        val future = utility.timeAgo(isoStringDaysFromNow(5))
+        assertNotEquals(past, future)
+    }
 }
