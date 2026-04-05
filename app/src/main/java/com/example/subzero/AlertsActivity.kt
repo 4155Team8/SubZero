@@ -34,7 +34,37 @@ class AlertsActivity : AppCompatActivity(){
         }
         navProfile.setOnClickListener{
             //Navigate to Profile Screen
+            val intent = Intent(this, ProfileActivity::class.java)
+            startActivity(intent)
             Toast.makeText(this, "Profile clicked", Toast.LENGTH_SHORT).show()
+        }
+
+        // Notification Card Toggle Logic
+        val cardNotifications = findViewById<androidx.cardview.widget.CardView>(R.id.cardNotifications)
+        val rlNotificationBackground = findViewById<android.widget.RelativeLayout>(R.id.rlNotificationBackground)
+        val tvNotificationStatus = findViewById<TextView>(R.id.tvNotificationStatus)
+        val tvNotificationDesc = findViewById<TextView>(R.id.tvNotificationDesc)
+        
+        var isNotificationsEnabled = true
+
+        cardNotifications.setOnClickListener {
+            isNotificationsEnabled = !isNotificationsEnabled
+            
+            if (isNotificationsEnabled) {
+                // Enabled state
+                rlNotificationBackground.setBackgroundResource(R.drawable.gradient_background)
+                tvNotificationStatus.text = "Notifications Enabled"
+                tvNotificationDesc.text = "You'll be notified 3 days before renewals"
+                tvNotificationStatus.setTextColor(android.graphics.Color.WHITE)
+                tvNotificationDesc.setTextColor(android.graphics.Color.parseColor("#E0E0E0"))
+            } else {
+                // Disabled state
+                rlNotificationBackground.setBackgroundColor(android.graphics.Color.parseColor("#EEEEEE"))
+                tvNotificationStatus.text = "Notifications Disabled"
+                tvNotificationDesc.text = "You won't receive renewal alerts"
+                tvNotificationStatus.setTextColor(android.graphics.Color.DKGRAY)
+                tvNotificationDesc.setTextColor(android.graphics.Color.GRAY)
+            }
         }
 
         //Example

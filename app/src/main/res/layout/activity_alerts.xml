@@ -47,6 +47,7 @@
                 app:cardElevation="0dp">
 
                 <RelativeLayout
+                    android:id="@+id/rlNotificationBackground"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@drawable/gradient_background"
@@ -72,6 +73,7 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/tvNotificationStatus"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Notifications Enabled"
@@ -80,6 +82,7 @@
                             android:textStyle="bold" />
 
                         <TextView
+                            android:id="@+id/tvNotificationDesc"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
