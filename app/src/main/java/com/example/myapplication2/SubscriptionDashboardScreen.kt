@@ -53,8 +53,8 @@ import androidx.compose.ui.unit.dp
 import java.text.NumberFormat
 import java.util.Locale
 
-private val DashboardBackgroundTop = Color(0xFFD81B60)
-private val DashboardBackgroundBottom = Color(0xFFF06292)
+private val DashboardBackgroundTop = Color(0xFFA855F7)
+private val DashboardBackgroundBottom = Color(0xFFA855F7)
 private val DashboardCardColor = Color(0xFFF7F3F4)
 private val DashboardAccent = Color(0xFFE53935)
 private val DashboardAccentSoft = Color(0xFFFFCDD2)
