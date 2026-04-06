@@ -17,6 +17,4 @@ local.properties
 /SubZero_backend/node_modules# IDE - Copilot and other IDE files
 .idea/copilot.data.migration.ask2agent.xml
 .idea/markdown.xml
-SubZero_Backend/package.json
 SubZero_Backend/node_modules
-SubZero_Backend/.env
