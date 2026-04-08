@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import java.text.NumberFormat
 import java.util.Locale
 
+<<<<<<< HEAD
 private val Blue500 = Color(0xFF3B82F6)
 private val Blue600 = Color(0xFF2563EB)
 private val Purple500 = Color(0xFFA855F7)
@@ -68,6 +69,16 @@ private val Orange500 = Color(0xFFF59E0B)
 private enum class BottomTab {
     Manage, Insights, Alerts, Profile
 }
+=======
+private val DashboardBackgroundTop = Color(0xFFA855F7)
+private val DashboardBackgroundBottom = Color(0xFFA855F7)
+private val DashboardCardColor = Color(0xFFF7F3F4)
+private val DashboardAccent = Color(0xFFE53935)
+private val DashboardAccentSoft = Color(0xFFFFCDD2)
+private val DashboardGreen = Color(0xFF2E7D32)
+private val DashboardTextDark = Color(0xFF2B2B2B)
+private val DashboardMuted = Color(0xFF7A7A7A)
+>>>>>>> 27ab9fb7b721d505f336e3fd30f87d6e5a029c98
 
 @Composable
 fun SubscriptionDashboardScreen(
