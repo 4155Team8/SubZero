@@ -22,15 +22,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -53,14 +53,21 @@ import androidx.compose.ui.unit.dp
 import java.text.NumberFormat
 import java.util.Locale
 
-private val DashboardBackgroundTop = Color(0xFFD81B60)
-private val DashboardBackgroundBottom = Color(0xFFF06292)
-private val DashboardCardColor = Color(0xFFF7F3F4)
-private val DashboardAccent = Color(0xFFE53935)
-private val DashboardAccentSoft = Color(0xFFFFCDD2)
-private val DashboardGreen = Color(0xFF2E7D32)
-private val DashboardTextDark = Color(0xFF2B2B2B)
-private val DashboardMuted = Color(0xFF7A7A7A)
+private val Blue500 = Color(0xFF3B82F6)
+private val Blue600 = Color(0xFF2563EB)
+private val Purple500 = Color(0xFFA855F7)
+private val Indigo500 = Color(0xFF6366F1)
+private val White = Color(0xFFFFFFFF)
+private val Gray50 = Color(0xFFF9FAFB)
+private val Gray200 = Color(0xFFE5E7EB)
+private val Gray500 = Color(0xFF6B7280)
+private val Gray700 = Color(0xFF374151)
+private val Green500 = Color(0xFF22C55E)
+private val Orange500 = Color(0xFFF59E0B)
+
+private enum class BottomTab {
+    Manage, Insights, Alerts, Profile
+}
 
 @Composable
 fun SubscriptionDashboardScreen(
@@ -70,8 +77,9 @@ fun SubscriptionDashboardScreen(
     val allItems by vm.items.collectAsState()
     val currency = remember { NumberFormat.getCurrencyInstance(Locale.US) }
 
-    val months = listOf("Feb", "Mar", "Apr", "May", "Jun", "Jul")
-    var selectedMonth by remember { mutableStateOf("Jun") }
+    val months = listOf("Nov", "Dec", "Jan", "Feb", "Mar", "Apr")
+    var selectedMonth by remember { mutableStateOf("Nov") }
+    var selectedTab by remember { mutableStateOf(BottomTab.Alerts) }
 
     val selectedMonthItems = allItems.filter { it.month == selectedMonth }
     val totalSpend = selectedMonthItems.sumOf { it.cost }
@@ -89,29 +97,32 @@ fun SubscriptionDashboardScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onGoToManage,
-                containerColor = Color.White,
-                contentColor = DashboardAccent
+                containerColor = Blue600,
+                contentColor = White
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add subscription")
             }
         },
         bottomBar = {
             SubscriptionBottomBar(
-                onDashboardClick = {},
-                onManageClick = onGoToManage,
-                onSpendingClick = {},
-                onAlertsClick = {},
-                onProfileClick = {}
+                selectedTab = selectedTab,
+                onManageClick = {
+                    selectedTab = BottomTab.Manage
+                    onGoToManage()
+                },
+                onInsightsClick = { selectedTab = BottomTab.Insights },
+                onAlertsClick = { selectedTab = BottomTab.Alerts },
+                onProfileClick = { selectedTab = BottomTab.Profile }
             )
         },
-        containerColor = Color.Transparent
+        containerColor = Gray50
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        listOf(DashboardBackgroundTop, DashboardBackgroundBottom)
+                        listOf(Blue500, Purple500, Indigo500)
                     )
                 )
                 .padding(innerPadding)
@@ -122,9 +133,7 @@ fun SubscriptionDashboardScreen(
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
+                item { Spacer(modifier = Modifier.height(16.dp)) }
 
                 item {
                     DashboardHeader(selectedMonth)
@@ -157,7 +166,7 @@ fun SubscriptionDashboardScreen(
                 item {
                     Text(
                         text = "$selectedMonth SUBSCRIPTIONS",
-                        color = Color.White.copy(alpha = 0.95f),
+                        color = White.copy(alpha = 0.96f),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -189,9 +198,7 @@ fun SubscriptionDashboardScreen(
                     }
                 }
 
-                item {
-                    Spacer(modifier = Modifier.height(100.dp))
-                }
+                item { Spacer(modifier = Modifier.height(100.dp)) }
             }
         }
     }
@@ -202,13 +209,13 @@ private fun DashboardHeader(selectedMonth: String) {
     Column {
         Text(
             text = "Subscriptions",
-            color = Color.White,
+            color = White,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
         Text(
             text = "$selectedMonth spending overview",
-            color = Color.White.copy(alpha = 0.9f),
+            color = White.copy(alpha = 0.9f),
             style = MaterialTheme.typography.bodyMedium
         )
     }
@@ -222,29 +229,25 @@ private fun MonthSelectorRow(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         months.forEach { month ->
             val selected = month == selectedMonth
 
             Card(
-                modifier = Modifier
-                    .width(48.dp)
-                    .clickable { onMonthSelected(month) },
+                modifier = Modifier.clickable { onMonthSelected(month) },
                 shape = RoundedCornerShape(10.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (selected) Color.White else Color.White.copy(alpha = 0.18f)
+                    containerColor = if (selected) White else White.copy(alpha = 0.18f)
                 )
             ) {
                 Box(
-                    modifier = Modifier
-                        .padding(vertical = 10.dp)
-                        .fillMaxWidth(),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = month,
-                        color = if (selected) DashboardAccent else Color.White,
+                        color = if (selected) Blue600 else White,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -260,13 +263,13 @@ private fun SpendingChartCard(
 ) {
     Card(
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.14f)),
+        colors = CardDefaults.cardColors(containerColor = White.copy(alpha = 0.14f)),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "Subscription Spend",
-                color = Color.White,
+                color = White,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -296,8 +299,7 @@ private fun SpendingChartCard(
                                 .height((100 * fraction).dp)
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(
-                                    if (selected) Color.White
-                                    else Color.White.copy(alpha = 0.45f)
+                                    if (selected) White else White.copy(alpha = 0.45f)
                                 )
                         )
 
@@ -305,7 +307,7 @@ private fun SpendingChartCard(
 
                         Text(
                             text = item.month,
-                            color = Color.White,
+                            color = White,
                             style = MaterialTheme.typography.labelSmall
                         )
                     }
@@ -325,27 +327,21 @@ private fun SummaryCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = DashboardCardColor)
+        colors = CardDefaults.cardColors(containerColor = White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            SummaryRow("Monthly Budget", currency.format(budget), DashboardTextDark)
-
+            SummaryRow("Monthly Budget", currency.format(budget), Gray700)
             Spacer(modifier = Modifier.height(10.dp))
-
-            SummaryRow("Subscription Spend", currency.format(totalSpend), DashboardTextDark)
-
+            SummaryRow("Subscription Spend", currency.format(totalSpend), Gray700)
             Spacer(modifier = Modifier.height(10.dp))
-
             SummaryRow(
                 "Remaining Budget",
                 currency.format(remaining),
-                if (remaining >= 0) DashboardGreen else Color.Red
+                if (remaining >= 0) Green500 else Orange500
             )
 
             Spacer(modifier = Modifier.height(14.dp))
-
-            Divider(color = Color.LightGray.copy(alpha = 0.7f))
-
+            HorizontalDivider(color = Gray200)
             Spacer(modifier = Modifier.height(10.dp))
 
             Text(
@@ -354,7 +350,7 @@ private fun SummaryCard(
                 } else {
                     "No budget set."
                 },
-                color = DashboardMuted,
+                color = Gray500,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
@@ -376,14 +372,14 @@ private fun SummaryRow(
             modifier = Modifier
                 .size(24.dp)
                 .clip(CircleShape)
-                .background(DashboardAccentSoft),
+                .background(Blue500.copy(alpha = 0.14f)),
             contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
                     .size(10.dp)
                     .clip(CircleShape)
-                    .background(DashboardAccent)
+                    .background(Blue600)
             )
         }
 
@@ -392,7 +388,7 @@ private fun SummaryRow(
         Text(
             text = label,
             modifier = Modifier.weight(1f),
-            color = DashboardTextDark,
+            color = Gray700,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium
         )
@@ -414,28 +410,28 @@ private fun AddFirstSubscriptionCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = DashboardCardColor)
+        colors = CardDefaults.cardColors(containerColor = White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "$month Subscriptions",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = DashboardTextDark
+                color = Gray700
             )
 
             Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = "You have no subscriptions for $month yet.",
-                color = DashboardMuted,
+                color = Gray500,
                 style = MaterialTheme.typography.bodyMedium
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             TextButton(onClick = onAddFirstClick) {
-                Text("Add First Subscription")
+                Text("Add First Subscription", color = Blue600)
             }
         }
     }
@@ -451,14 +447,14 @@ private fun ThisMonthSubscriptionsCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = DashboardCardColor)
+        colors = CardDefaults.cardColors(containerColor = White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "$month Subscriptions",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = DashboardTextDark
+                color = Gray700
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -471,7 +467,7 @@ private fun ThisMonthSubscriptionsCard(
 
                 if (index != items.lastIndex) {
                     Spacer(modifier = Modifier.height(10.dp))
-                    Divider(color = Color.LightGray.copy(alpha = 0.55f))
+                    HorizontalDivider(color = Gray200)
                     Spacer(modifier = Modifier.height(10.dp))
                 }
             }
@@ -479,7 +475,7 @@ private fun ThisMonthSubscriptionsCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             TextButton(onClick = onManageClick) {
-                Text("Manage Subscriptions")
+                Text("Manage Subscriptions", color = Blue600)
             }
         }
     }
@@ -494,37 +490,37 @@ private fun IndividualSubscriptionCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = DashboardCardColor)
+        colors = CardDefaults.cardColors(containerColor = White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = subscription.name,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = DashboardTextDark
+                color = Gray700
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "Monthly Cost: ${currency.format(subscription.cost)}",
-                color = DashboardTextDark
+                color = Gray700
             )
 
             Text(
                 text = "Billing Day: ${subscription.billingDay}",
-                color = DashboardMuted
+                color = Gray500
             )
 
             Text(
                 text = "Month: ${subscription.month}",
-                color = DashboardMuted
+                color = Gray500
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             TextButton(onClick = onManageClick) {
-                Text("View in Manage")
+                Text("View in Manage", color = Blue600)
             }
         }
     }
@@ -543,7 +539,7 @@ private fun SubscriptionLineItem(
             modifier = Modifier
                 .size(10.dp)
                 .clip(CircleShape)
-                .background(DashboardAccent)
+                .background(Blue600)
         )
 
         Spacer(modifier = Modifier.width(12.dp))
@@ -551,13 +547,13 @@ private fun SubscriptionLineItem(
         Text(
             text = name,
             modifier = Modifier.weight(1f),
-            color = DashboardTextDark,
+            color = Gray700,
             style = MaterialTheme.typography.bodyLarge
         )
 
         Text(
             text = amount,
-            color = DashboardTextDark,
+            color = Gray700,
             fontWeight = FontWeight.SemiBold
         )
     }
@@ -565,26 +561,45 @@ private fun SubscriptionLineItem(
 
 @Composable
 private fun SubscriptionBottomBar(
-    onDashboardClick: () -> Unit,
+    selectedTab: BottomTab,
     onManageClick: () -> Unit,
-    onSpendingClick: () -> Unit,
+    onInsightsClick: () -> Unit,
     onAlertsClick: () -> Unit,
     onProfileClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White)
+            .background(White)
             .navigationBarsPadding()
-            .padding(vertical = 10.dp, horizontal = 8.dp),
+            .padding(vertical = 12.dp, horizontal = 10.dp),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        BottomBarItem("Dashboard", Icons.Default.Home, false, onDashboardClick)
-        BottomBarItem("Manage", Icons.Default.Build, false, onManageClick)
-        BottomBarItem("Spending", Icons.Default.Home, true, onSpendingClick)
-        BottomBarItem("Alerts", Icons.Default.Notifications, false, onAlertsClick)
-        BottomBarItem("Profile", Icons.Default.Person, false, onProfileClick)
+        BottomBarItem(
+            label = "Manage",
+            icon = Icons.Default.GridView,
+            selected = selectedTab == BottomTab.Manage,
+            onClick = onManageClick
+        )
+        BottomBarItem(
+            label = "Insights",
+            icon = Icons.Default.TrendingUp,
+            selected = selectedTab == BottomTab.Insights,
+            onClick = onInsightsClick
+        )
+        BottomBarItem(
+            label = "Alerts",
+            icon = Icons.Default.Notifications,
+            selected = selectedTab == BottomTab.Alerts,
+            onClick = onAlertsClick
+        )
+        BottomBarItem(
+            label = "Profile",
+            icon = Icons.Default.Person,
+            selected = selectedTab == BottomTab.Profile,
+            onClick = onProfileClick
+        )
     }
 }
 
@@ -595,7 +610,7 @@ private fun BottomBarItem(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    val color = if (selected) DashboardAccent else Color.Gray
+    val color = if (selected) Blue600 else Gray500
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -605,14 +620,14 @@ private fun BottomBarItem(
             imageVector = icon,
             contentDescription = label,
             tint = color,
-            modifier = Modifier.size(22.dp)
+            modifier = Modifier.size(28.dp)
         )
-        Spacer(modifier = Modifier.height(2.dp))
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = label,
             color = color,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
         )
     }
 }

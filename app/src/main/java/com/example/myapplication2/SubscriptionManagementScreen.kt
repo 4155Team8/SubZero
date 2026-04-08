@@ -4,6 +4,7 @@ package com.example.myapplication2
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,12 +13,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -37,20 +45,29 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import java.text.NumberFormat
 import java.util.Locale
 
-private val ManagementBackgroundTop = Color(0xFFD81B60)
-private val ManagementBackgroundBottom = Color(0xFFF06292)
-private val ManagementCardColor = Color.White
-private val ManagementTextDark = Color(0xFF2B2B2B)
-private val ManagementMuted = Color(0xFF6F6F6F)
+private val ManageBlue500 = Color(0xFF3B82F6)
+private val ManageBlue600 = Color(0xFF2563EB)
+private val ManagePurple500 = Color(0xFFA855F7)
+private val ManageIndigo500 = Color(0xFF6366F1)
+private val ManageWhite = Color(0xFFFFFFFF)
+private val ManageGray100 = Color(0xFFF3F4F6)
+private val ManageGray500 = Color(0xFF6B7280)
+private val ManageGray700 = Color(0xFF374151)
+
+private enum class ManageBottomTab {
+    Manage, Insights, Alerts, Profile
+}
 
 @Composable
 fun SubscriptionManagementScreen(
@@ -60,8 +77,8 @@ fun SubscriptionManagementScreen(
     val items by vm.items.collectAsState()
     val currency = remember { NumberFormat.getCurrencyInstance(Locale.US) }
 
-    val months = listOf("Feb", "Mar", "Apr", "May", "Jun", "Jul")
-    var selectedMonth by remember { mutableStateOf("Jun") }
+    val months = listOf("Nov", "Dec", "Jan", "Feb", "Mar", "Apr")
+    var selectedMonth by remember { mutableStateOf("Nov") }
 
     val filteredItems = items.filter { it.month == selectedMonth }
 
@@ -70,6 +87,7 @@ fun SubscriptionManagementScreen(
     var deleting by remember { mutableStateOf<Subscription?>(null) }
     var viewing by remember { mutableStateOf<Subscription?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var selectedTab by remember { mutableStateOf(ManageBottomTab.Manage) }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -77,26 +95,26 @@ fun SubscriptionManagementScreen(
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    titleContentColor = Color.White,
-                    actionIconContentColor = Color.White
+                    titleContentColor = ManageWhite,
+                    actionIconContentColor = ManageWhite
                 ),
                 title = {
                     Column {
                         Text(
                             text = "Central Management",
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = ManageWhite
                         )
                         Text(
                             text = "Manage subscriptions by month",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.9f)
+                            color = ManageWhite.copy(alpha = 0.9f)
                         )
                     }
                 },
                 actions = {
                     TextButton(onClick = onGoToDashboard) {
-                        Text("Dashboard", color = Color.White)
+                        Text("Back", color = ManageWhite)
                     }
                 }
             )
@@ -107,11 +125,20 @@ fun SubscriptionManagementScreen(
                     errorMessage = null
                     showAddDialog = true
                 },
-                containerColor = Color.White,
-                contentColor = Color(0xFFE53935)
+                containerColor = ManageBlue600,
+                contentColor = ManageWhite
             ) {
                 Text("+")
             }
+        },
+        bottomBar = {
+            ManageBottomBar(
+                selectedTab = selectedTab,
+                onManageClick = { selectedTab = ManageBottomTab.Manage },
+                onInsightsClick = { selectedTab = ManageBottomTab.Insights },
+                onAlertsClick = { selectedTab = ManageBottomTab.Alerts },
+                onProfileClick = { selectedTab = ManageBottomTab.Profile }
+            )
         }
     ) { innerPadding ->
         Column(
@@ -119,7 +146,7 @@ fun SubscriptionManagementScreen(
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        listOf(ManagementBackgroundTop, ManagementBackgroundBottom)
+                        listOf(ManageBlue500, ManagePurple500, ManageIndigo500)
                     )
                 )
                 .padding(innerPadding)
@@ -135,7 +162,7 @@ fun SubscriptionManagementScreen(
             errorMessage?.let { message ->
                 Card(
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                    colors = CardDefaults.cardColors(containerColor = ManageWhite)
                 ) {
                     Text(
                         text = message,
@@ -208,7 +235,7 @@ fun SubscriptionManagementScreen(
                 },
                 confirmButton = {
                     TextButton(onClick = { viewing = null }) {
-                        Text("Close")
+                        Text("Close", color = ManageBlue600)
                     }
                 }
             )
@@ -252,7 +279,7 @@ fun SubscriptionManagementScreen(
                 },
                 dismissButton = {
                     TextButton(onClick = { deleting = null }) {
-                        Text("Cancel")
+                        Text("Cancel", color = ManageBlue600)
                     }
                 }
             )
@@ -267,26 +294,27 @@ private fun MonthSelectorRow(
     onMonthSelected: (String) -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         months.forEach { month ->
             val selected = month == selectedMonth
 
             Card(
-                modifier = Modifier
-                    .width(48.dp)
-                    .clickable { onMonthSelected(month) },
+                modifier = Modifier.clickable { onMonthSelected(month) },
                 shape = RoundedCornerShape(10.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (selected) Color.White else Color.White.copy(alpha = 0.18f)
+                    containerColor = if (selected) ManageWhite else ManageWhite.copy(alpha = 0.18f)
                 )
             ) {
                 Text(
                     text = month,
-                    modifier = Modifier.padding(vertical = 10.dp).fillMaxWidth(),
-                    color = if (selected) Color(0xFFE53935) else Color.White,
-                    fontWeight = FontWeight.SemiBold
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    color = if (selected) ManageBlue600 else ManageWhite,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1
                 )
             }
         }
@@ -303,7 +331,7 @@ private fun ManagementSummaryCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = ManagementCardColor)
+        colors = CardDefaults.cardColors(containerColor = ManageWhite)
     ) {
         Column(
             modifier = Modifier
@@ -314,18 +342,18 @@ private fun ManagementSummaryCard(
                 text = "$month Overview",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = ManagementTextDark
+                color = ManageGray700
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "Monthly Total: ${currency.format(total)}",
-                color = ManagementTextDark
+                color = ManageGray700
             )
             Text(
                 text = "Subscriptions: $count",
-                color = ManagementTextDark
+                color = ManageGray700
             )
         }
     }
@@ -339,7 +367,7 @@ private fun EmptyManagementState(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = ManagementCardColor)
+        colors = CardDefaults.cardColors(containerColor = ManageWhite)
     ) {
         Column(
             modifier = Modifier
@@ -351,12 +379,12 @@ private fun EmptyManagementState(
                 text = "No subscriptions in $month",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = ManagementTextDark
+                color = ManageGray700
             )
             Text(
                 text = "Add your first subscription for $month.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = ManagementMuted
+                color = ManageGray500
             )
             Button(onClick = onAddClick) {
                 Text("Add First Subscription")
@@ -376,7 +404,7 @@ private fun SubscriptionManagementCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = ManagementCardColor),
+        colors = CardDefaults.cardColors(containerColor = ManageWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
@@ -388,22 +416,22 @@ private fun SubscriptionManagementCard(
                 text = sub.name,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = ManagementTextDark
+                color = ManageGray700
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = "Cost: ${currency.format(sub.cost)}",
-                color = ManagementTextDark
+                color = ManageGray700
             )
             Text(
                 text = "Billing Day: ${sub.billingDay}",
-                color = ManagementTextDark
+                color = ManageGray700
             )
             Text(
                 text = "Month: ${sub.month}",
-                color = ManagementMuted
+                color = ManageGray500
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -413,13 +441,13 @@ private fun SubscriptionManagementCard(
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(onClick = onView) {
-                    Text("View")
+                    Text("View", color = ManageBlue600)
                 }
                 TextButton(onClick = onEdit) {
-                    Text("Edit")
+                    Text("Edit", color = ManageBlue600)
                 }
                 TextButton(onClick = onDelete) {
-                    Text("Delete")
+                    Text("Delete", color = Color.Red)
                 }
             }
         }
@@ -435,7 +463,7 @@ private fun SubscriptionDialog(
     onDismiss: () -> Unit,
     onSave: (String, Double, Int, String) -> Unit
 ) {
-    val months = listOf("Feb", "Mar", "Apr", "May", "Jun", "Jul")
+    val months = listOf("Nov", "Dec", "Jan", "Feb", "Mar", "Apr")
 
     var name by remember { mutableStateOf(initial?.name ?: "") }
     var costText by remember { mutableStateOf(initial?.cost?.toString() ?: "") }
@@ -485,7 +513,10 @@ private fun SubscriptionDialog(
                     fontWeight = FontWeight.SemiBold
                 )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     months.forEach { item ->
                         Card(
                             modifier = Modifier.clickable {
@@ -494,13 +525,15 @@ private fun SubscriptionDialog(
                             },
                             shape = RoundedCornerShape(10.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (month == item) Color(0xFFD81B60) else Color(0xFFF3F3F3)
+                                containerColor = if (month == item) ManageBlue600 else ManageGray100
                             )
                         ) {
                             Text(
                                 text = item,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                color = if (month == item) Color.White else Color.Black
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                color = if (month == item) ManageWhite else ManageGray700,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1
                             )
                         }
                     }
@@ -533,8 +566,81 @@ private fun SubscriptionDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text("Cancel", color = ManageBlue600)
             }
         }
     )
+}
+
+@Composable
+private fun ManageBottomBar(
+    selectedTab: ManageBottomTab,
+    onManageClick: () -> Unit,
+    onInsightsClick: () -> Unit,
+    onAlertsClick: () -> Unit,
+    onProfileClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(ManageWhite)
+            .navigationBarsPadding()
+            .padding(vertical = 12.dp, horizontal = 10.dp),
+        horizontalArrangement = Arrangement.SpaceAround,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        ManageBottomBarItem(
+            label = "Manage",
+            icon = Icons.Default.GridView,
+            selected = selectedTab == ManageBottomTab.Manage,
+            onClick = onManageClick
+        )
+        ManageBottomBarItem(
+            label = "Insights",
+            icon = Icons.Default.TrendingUp,
+            selected = selectedTab == ManageBottomTab.Insights,
+            onClick = onInsightsClick
+        )
+        ManageBottomBarItem(
+            label = "Alerts",
+            icon = Icons.Default.Notifications,
+            selected = selectedTab == ManageBottomTab.Alerts,
+            onClick = onAlertsClick
+        )
+        ManageBottomBarItem(
+            label = "Profile",
+            icon = Icons.Default.Person,
+            selected = selectedTab == ManageBottomTab.Profile,
+            onClick = onProfileClick
+        )
+    }
+}
+
+@Composable
+private fun ManageBottomBarItem(
+    label: String,
+    icon: ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val color = if (selected) ManageBlue600 else ManageGray500
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable { onClick() }
+    ) {
+        androidx.compose.material3.Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = color,
+            modifier = Modifier.size(28.dp)
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = label,
+            color = color,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+        )
+    }
 }
