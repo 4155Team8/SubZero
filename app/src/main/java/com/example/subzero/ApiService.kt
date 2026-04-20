@@ -92,4 +92,9 @@ interface ApiService {
     suspend fun getProfile(
         @Header("Authorization") token: String
     ): Response<ProfileResponse>
+
+    @POST("reminders/clear-all")
+    suspend fun clearAllAlerts(
+        @Header("Authorization") token: String
+    ):Response<MessageResponse>
 }

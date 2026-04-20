@@ -120,4 +120,15 @@ class ApiCalls {
         }
     }
 
+    suspend fun clearAllAlerts(context: Context): Boolean {
+        val token = SessionManager.getToken(context) ?: return false
+        return try {
+            val response = ApiClient.instance.clearAllAlerts("Bearer $token")
+            response.isSuccessful
+        } catch (e: Exception) {
+            Log.e("API_ERROR", "Failed to delete alerts", e)
+            false
+        }
+    }
+
 }

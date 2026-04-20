@@ -27,6 +27,8 @@ class AlertsActivity : AppCompatActivity() {
     private lateinit var remindersContainer : androidx.cardview.widget.CardView
     private lateinit var remindersList : LinearLayout
     private lateinit var tvNewAlerts : TextView
+    private lateinit var btnClearAll: TextView
+
     private var util = Utility()
     private var calls = ApiCalls()
 
@@ -36,6 +38,11 @@ class AlertsActivity : AppCompatActivity() {
         initViews() // initiates views
         setupBottomNav()
         loadAlerts()
+
+        //set the click listener for bulk action
+        btnClearAll.setOnClickListener{
+            handleClearAll()
+        }
     }
 
     private fun initViews() {
@@ -48,6 +55,7 @@ class AlertsActivity : AppCompatActivity() {
         remindersContainer = findViewById(R.id.remindersContainer)
         remindersList = findViewById(R.id.remindersList)
         tvNewAlerts = findViewById(R.id.tvNewAlerts)
+        btnClearAll = findViewById(R.id.btnClearAll)
     }
 
     private fun setupBottomNav() {
@@ -89,6 +97,15 @@ class AlertsActivity : AppCompatActivity() {
 
     private fun showEmptyState() {
         // TODO: ADD EMPTY PLACEHOLDERS
+        btnClearAll.visibility = View.GONE
+
+        //Placeholder text
+        val emptyTextView = TextView(this).apply {
+            text = "No new alerts. You are all caught up!"
+            gravity = android.view.Gravity.CENTER
+            setPadding(0,(50 * resources.displayMetrics.density).toInt(),0,0)
+        }
+        remindersList.addView(emptyTextView)
     }
 
     private fun buildAlerts(alert: AlertResponse, dp: Float): View {
@@ -191,4 +208,33 @@ class AlertsActivity : AppCompatActivity() {
     private fun navigateToDashboard() {
         // nothing yet
     }
+    private fun handleClearAll(){
+        //show a confirmation dialog
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Clear Notifications")
+            .setMessage("Are you sure you want to clear all notifications?")
+            .setPositiveButton("Clear All") { _, _ ->
+                performBulkDelete()
+                //call the api
+                }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+    private fun performBulkDelete() {
+        lifecycleScope.launch {
+            val success = calls.clearAllAlerts(this@AlertsActivity)
+
+            if (success) {
+                //update the UI locally
+                remindersList.removeAllViews()
+                tvNewAlerts.text = "0 new"
+                showEmptyState()
+                Toast.makeText(this@AlertsActivity, "Alerts cleared", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this@AlertsActivity, "Failed to clear alerts", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    
+    
 }
