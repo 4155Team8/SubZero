@@ -210,5 +210,19 @@ router.get("/generate-reminders", authenticate, async (req, res) => {
         res.status(500).json({ error: "Failed to generate reminders" });
     }
 });
+// GET /subscriptions/redundant
+router.get("/redundant",authenticate, async(req,res)=>{
+  try{
+
+    const userId=req.user.id;
+    const data= await require("./subscriptionModel").getRedundantSubscriptions(userId);
+
+    res.json(data);
+
+
+  } catch(err){
+    res.status(500).json({error: err.message});
+  }
+});
 
 module.exports = router;

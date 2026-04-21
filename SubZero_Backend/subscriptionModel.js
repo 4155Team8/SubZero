@@ -139,11 +139,52 @@ const generateReminders = async (userId) => {
     return generatedReminders;
 };
 
+async function getRedundantSubscriptions(userId) {
+    // Query all subscriptions for the user where the name appears more than once
+    const [rows] = await db.query(`
+        SELECT *
+        FROM subscription
+        WHERE user_id = ?
+          AND name IN (
+              SELECT name
+              FROM subscription
+              WHERE user_id = ?
+              GROUP BY name
+              HAVING COUNT(*) > 1
+          )
+        ORDER BY name
+    `, [userId, userId]);
+
+    const groups = {};
+
+
+    // Loop through results and group them by subscription name
+    for (const sub of rows) {
+        if (!groups[sub.name]) {
+            groups[sub.name] = [];
+        }
+        // Add the subscription to its corresponding group
+        groups[sub.name].push(sub);
+    }
+     // Convert grouped object into an array format for API response
+    // Each group contains the subscription name and all matching subscriptions
+    return Object.keys(groups).map(name => ({
+        subscription_name: name,
+        subscriptions: groups[name]
+    }));
+}
+
+
+
+
+
+
 module.exports = {
     createSubscription,
     getSubscriptionsByUser,
     updateSubscription,
     deleteSubscription,
     getSubscriptionNeedingReminder,
-    generateReminders
+    generateReminders,
+    getRedundantSubscriptions
 };
