@@ -27,6 +27,22 @@ class ApiCalls {
         val reminders: List<AlertResponse>?
     )
 
+    data class RedundantSubscriptionItem(
+        val id: Int,
+        val name: String,
+        val cost: String,
+        val user_id: Int,
+        val category_id: Int,
+        val billing_cycle_id: Int,
+        val renewal_date: String,
+        val is_active: Int,
+        val reminder_days_before: Int,
+        val last_reminded_at: String?,
+        val created_at: String,
+        val updated_at: String,
+        val category_name: String
+    )
+
     suspend fun loadFull(cont: Context): fullResponse? {
         val token = SessionManager.getToken(cont) ?: return null
 
@@ -84,6 +100,22 @@ class ApiCalls {
             val alertResponse = ApiClient.instance.getReminders("Bearer $token")
             alertResponse.body()
         } catch (e: Exception) {
+            Toast.makeText(cont, "Network error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            null
+        }
+    }
+    suspend fun loadRedundantSubscriptions(cont: Context): List<RedundantGroupResponse>? {
+        val token = SessionManager.getToken(cont) ?: return null
+        return try {
+            val response = ApiClient.instance.getRedundantSubscriptions("Bearer $token")
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.e("REDUNDANT_ERROR", "Code: ${response.code()} Message: ${response.message()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("REDUNDANT_ERROR", e.localizedMessage ?: "", e)
             Toast.makeText(cont, "Network error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
             null
         }

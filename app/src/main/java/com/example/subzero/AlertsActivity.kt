@@ -23,6 +23,7 @@ import org.w3c.dom.Text
 import java.text.SimpleDateFormat
 import java.util.*
 import com.example.subzero.global.Utility
+import com.example.subzero.network.RedundantGroupResponse
 class AlertsActivity : AppCompatActivity() {
     private lateinit var remindersContainer : androidx.cardview.widget.CardView
     private lateinit var remindersList : LinearLayout
@@ -57,7 +58,7 @@ class AlertsActivity : AppCompatActivity() {
         findViewById<LinearLayout>(R.id.navProfile).setOnClickListener { navigateToProfile() }
     }
     private fun renderAlerts(alerts: List<AlertResponse>) {
-        remindersList.removeAllViews()
+
 
         val dp = resources.displayMetrics.density
         alerts.forEach { alert ->
@@ -76,6 +77,14 @@ class AlertsActivity : AppCompatActivity() {
                 // create list
                 val reminders: List<AlertResponse> = alerts ?: emptyList()
 
+                val redundantGroups= calls.loadRedundantSubscriptions(this@AlertsActivity) ?: emptyList()
+                remindersList.removeAllViews()
+                if(redundantGroups.isNotEmpty()){
+                    val warningView=buildRedundantWarning(redundantGroups)
+                    remindersList.addView(warningView)
+                }
+
+
                 // rendering stuff
                 if (reminders.isEmpty()) {
                     showEmptyState()
@@ -83,6 +92,7 @@ class AlertsActivity : AppCompatActivity() {
                     tvNewAlerts.text = reminders.size.toString() + " new"
                     renderAlerts(reminders)
                 }
+
         }
     }
 
@@ -90,6 +100,76 @@ class AlertsActivity : AppCompatActivity() {
     private fun showEmptyState() {
         // TODO: ADD EMPTY PLACEHOLDERS
     }
+
+    private fun buildRedundantWarning(groups: List<RedundantGroupResponse>): View{
+        val dp  = resources.displayMetrics.density
+
+        val card= CardView(this).apply{
+            layoutParams=LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply{
+                topMargin= (16*dp).toInt()
+            }
+
+            setCardBackgroundColor(Color.parseColor("#FFF7ED"))
+
+            radius=16*dp
+            cardElevation=2*dp
+            useCompatPadding=true
+
+            setContentPadding(
+                (16*dp).toInt(),
+                (16*dp).toInt(),
+                (16*dp).toInt(),
+                (16*dp).toInt()
+            )
+        }
+
+        val container= LinearLayout(this).apply{
+            orientation= LinearLayout.VERTICAL
+        }
+
+        val title= TextView(this).apply{
+            text="Duplicate subscriptions detected"
+            textSize=16f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setTextColor(Color.parseColor("#EA580C"))
+        }
+        container.addView(title)
+
+        val subtitle=TextView(this).apply{
+            text = "You have multiple accounts for the same service:"
+            textSize = 13f
+            setTextColor(Color.parseColor("#4B5563"))
+            setPadding(0, (8 * dp).toInt(), 0, (8 * dp).toInt())
+        }
+        container.addView(subtitle)
+        groups.forEach { group ->
+            val name = group.subscription_name ?: "Unknown"
+
+            val title = TextView(this).apply {
+                text = "• $name"
+                textSize = 15f
+                setTypeface(typeface, android.graphics.Typeface.BOLD)
+            }
+            container.addView(title)
+
+            val count = group.subscriptions.size
+
+            val details = TextView(this).apply {
+                text = "$count account${if (count > 1) "s" else ""} found"
+                textSize = 13f
+                setPadding((12 * dp).toInt(), 0, 0, (8 * dp).toInt())
+            }
+            container.addView(details)
+        }
+
+        card.addView(container)
+        return card
+    }
+    
+    
 
     private fun buildAlerts(alert: AlertResponse, dp: Float): View {
         // Card container for each alert
@@ -191,4 +271,5 @@ class AlertsActivity : AppCompatActivity() {
     private fun navigateToDashboard() {
         // nothing yet
     }
+
 }

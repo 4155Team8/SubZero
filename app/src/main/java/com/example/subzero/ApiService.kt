@@ -56,6 +56,17 @@ data class ProfileResponse(
     val reminders_enabled: Int
 )
 
+data class RedundantGroupResponse(
+    val subscription_name: String,
+    val subscriptions: List<RedundantSubscriptionItem>
+)
+
+data class RedundantSubscriptionItem(
+    val id: Int,
+    val name: String,
+    val category_name: String
+)
+
 // interface
 
 interface ApiService {
@@ -87,6 +98,11 @@ interface ApiService {
     suspend fun getReminders(
         @Header("Authorization") token : String
     ): Response<List<AlertResponse>>
+
+    @GET("subscriptions/redundant")
+    suspend fun getRedundantSubscriptions(
+        @Header("Authorization") token: String
+    ): Response<List<RedundantGroupResponse>>
 
     @GET("profile")
     suspend fun getProfile(
