@@ -101,7 +101,7 @@ class AlertsActivity : AppCompatActivity() {
         // TODO: ADD EMPTY PLACEHOLDERS
     }
 
-    private fun buildRedundantWarning(groups: List<RedundantGroupResponse>): View{
+    fun buildRedundantWarning(groups: List<RedundantGroupResponse>): View{
         val dp  = resources.displayMetrics.density
 
         val card= CardView(this).apply{
