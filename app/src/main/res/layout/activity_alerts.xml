@@ -92,7 +92,20 @@
                     </LinearLayout>
                 </RelativeLayout>
             </androidx.cardview.widget.CardView>
-
+            <!-- Clear All Button -->
+            <TextView
+                android:id="@+id/btnClearAll"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Clear All"
+                android:textColor="@color/purple_main"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:padding="8sp"
+                android:clickable="true"
+                android:focusable="true"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/tvRecentHeader"/>
             <!-- Recent Activity Header -->
             <RelativeLayout
                 android:layout_width="match_parent"
@@ -100,6 +113,7 @@
                 android:layout_marginTop="32dp">
 
                 <TextView
+                    android:id="@+id/tvRecentHeader"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Recent Activity"
