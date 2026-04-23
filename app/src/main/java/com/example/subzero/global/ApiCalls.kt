@@ -128,6 +128,8 @@ class ApiCalls {
         } catch (e: Exception) {
             Log.e("Error", e.localizedMessage ?: "", e)
             null
+        }
+    }
     suspend fun clearAllAlerts(context: Context): Boolean {
         val token = SessionManager.getToken(context) ?: return false
         return try {
