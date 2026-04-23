@@ -7,6 +7,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import com.example.subzero.R
 
 class Notification(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
 
@@ -19,12 +20,10 @@ class Notification(ctx: Context, params: WorkerParameters) : Worker(ctx, params)
 
     private fun showNotification(title: String, body: String) {
         val channelId = "subzero_reminders"
-        val manager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val manager   = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId, "Reminders", NotificationManager.IMPORTANCE_DEFAULT
-            )
+            val channel = NotificationChannel(channelId, "Reminders", NotificationManager.IMPORTANCE_DEFAULT)
             manager.createNotificationChannel(channel)
         }
 
