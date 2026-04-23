@@ -228,7 +228,7 @@ class AlertsActivity : AppCompatActivity() {
         startActivity(Intent(this, ProfileActivity::class.java))
     }
     private fun navigateToDashboard() {
-        // nothing yet
+        startActivity(Intent(this, DashboardActivity::class.java))
     }
     private fun handleClearAll(){
         //show a confirmation dialog

@@ -6,7 +6,8 @@ const {
     createSubscription,
     getSubscriptionsByUser,
     updateSubscription,
-    deleteSubscription
+    deleteSubscription,
+    clearRemindersForUser
 } = require("./subscriptionModel");
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -210,5 +211,7 @@ router.get("/generate-reminders", authenticate, async (req, res) => {
         res.status(500).json({ error: "Failed to generate reminders" });
     }
 });
+
+
 
 module.exports = router;

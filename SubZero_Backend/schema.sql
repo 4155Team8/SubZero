@@ -56,13 +56,18 @@ CREATE TABLE IF NOT EXISTS subscription (
 
 CREATE TABLE IF NOT EXISTS reminders(
   id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL, 
   subscription_id INT NOT NULL,
   reminder_date DATE NOT NULL,
   name VARCHAR(255) NOT NULL,
   description VARCHAR(1000) NOT NULL,
   sent_at TIMESTAMP NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY(subscription_id) REFERENCES subscription(id) ON DELETE CASCADE
+
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (subscription_id) REFERENCES subscription(id) ON DELETE CASCADE,
+
+  INDEX idx_user_id (user_id)
 );
 
 CREATE TABLE IF NOT EXISTS password_reset_tokens (

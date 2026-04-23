@@ -99,8 +99,8 @@ interface ApiService {
     suspend fun deleteAccount(
         @Header("Authorization") token: String
     ): Response<deleteAccResponse>
-    @POST("reminders/clear-all")
+    @DELETE("reminders/clear-all")
     suspend fun clearAllAlerts(
         @Header("Authorization") token: String
-    ):Response<MessageResponse>
+    ): Response<MessageResponse>
 }

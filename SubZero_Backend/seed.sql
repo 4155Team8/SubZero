@@ -26,10 +26,10 @@ VALUES
 ('Gym Membership', 35.00, 1, 2, 3),
 ('Adobe Creative Cloud', 52.99, 1, 3, 5);
 
-INSERT INTO reminders (name, subscription_id, reminder_date, description)
+INSERT INTO reminders (name, subscription_id, reminder_date, description, user_id)
 VALUES
-('Netflix', 1, '2026-04-25', 'Your netflix payment is coming up soon.'), 
-('Spotify', 2, '2026-04-25', 'Spotify premium renewal coming soon.'), 
-('Amazon Prime', 3, '2026-04-10', 'Amazon Prime renewal coming soon.'), 
-('Gym Membership', 4, '2026-04-25', 'Annual fee for the gym coming soon.'), 
-('Adobe Creative Cloud', 5, '2026-04-25', 'Adobe CC is increasing in price in one month.');
+('Netflix', 1, '2026-04-25', 'Your netflix payment is coming up soon.', 1), 
+('Spotify', 2, '2026-04-25', 'Spotify premium renewal coming soon.', 1), 
+('Amazon Prime', 3, '2026-04-10', 'Amazon Prime renewal coming soon.', 1), 
+('Gym Membership', 4, '2026-04-25', 'Annual fee for the gym coming soon.', 1), 
+('Adobe Creative Cloud', 5, '2026-04-25', 'Adobe CC is increasing in price in one month.', 1);
