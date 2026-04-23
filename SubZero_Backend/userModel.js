@@ -49,4 +49,22 @@ async function loginUser({ email, password }) {
   return { id: user.id, email: user.email };
 }
 
-module.exports = { registerUser, loginUser };
+async function deleteUser({ id }) {
+  const [rows] = await db.query(
+    "SELECT id FROM users WHERE id = ?",
+    [id]
+  );
+
+  if (rows.length === 0) {
+    throw new Error("User not found");
+  }
+
+  await db.query(
+    "DELETE FROM users WHERE id = ?",
+    [id]
+  );
+
+  return { message: "User deleted successfully", id };
+}
+
+module.exports = { registerUser, loginUser, deleteUser };

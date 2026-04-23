@@ -3,7 +3,7 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
-const { registerUser, loginUser } = require("./userModel");
+const { registerUser, loginUser, deleteUser } = require("./userModel");
 const { sendPasswordResetEmail } = require("./emailService");
 const db = require("./db");
 const { verifyToken } = require("./authMiddleware");
@@ -196,7 +196,7 @@ async function updateEmail({ email, id }) {
     return { email, id };
 }
 
-
+// POST new pass
 router.post("/new-password", verifyToken, async (req, res) => {
     const { password } = req.body
     const id = req.user.id
@@ -216,6 +216,22 @@ router.post("/new-password", verifyToken, async (req, res) => {
     }
 })
 
+
+// DELETE account
+router.delete("/delete-account", verifyToken, async (req, res) => {
+  const id = req.user.id;
+
+  try {
+    const result = await deleteUser({ id });
+    res.status(200).json(result);
+  } catch (err) {
+    if (err.message === "User not found") {
+      return res.status(404).json({ error: err.message });
+    }
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
 async function updatePassword({ password_hash, id }) {
     const [result] = await db.query(
         "UPDATE users SET password_hash = ? WHERE id = ?",

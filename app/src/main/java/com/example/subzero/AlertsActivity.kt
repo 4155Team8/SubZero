@@ -23,6 +23,7 @@ import org.w3c.dom.Text
 import java.text.SimpleDateFormat
 import java.util.*
 import com.example.subzero.global.Utility
+import com.example.subzero.global.NotificationScheduler
 class AlertsActivity : AppCompatActivity() {
     private lateinit var remindersContainer : androidx.cardview.widget.CardView
     private lateinit var remindersList : LinearLayout
@@ -82,7 +83,28 @@ class AlertsActivity : AppCompatActivity() {
                 } else {
                     tvNewAlerts.text = reminders.size.toString() + " new"
                     renderAlerts(reminders)
+                    scheduleNotificationsForAlerts(reminders)
                 }
+        }
+    }
+
+    private fun scheduleNotificationsForAlerts(alerts: List<AlertResponse>) {
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        alerts.forEach { alert ->
+            try {
+                val reminderDate = sdf.parse(alert.reminder_date) ?: return@forEach
+                val delay = reminderDate.time - System.currentTimeMillis()
+                if (delay > 0) {
+                    NotificationScheduler.scheduleReminderNotification(
+                        context      = this,
+                        title        = alert.name,
+                        body         = alert.description,
+                        delayInMillis = delay
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("AlertsActivity", "Failed to schedule notification: ${e.message}")
+            }
         }
     }
 

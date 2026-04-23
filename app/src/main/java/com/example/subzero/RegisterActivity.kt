@@ -16,6 +16,9 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
 import org.w3c.dom.Text
+import android.content.res.ColorStateList
+import android.text.Editable
+import android.text.TextWatcher
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -61,6 +64,22 @@ class RegisterActivity : AppCompatActivity() {
         }
 
         tvGoToLogin.setOnClickListener { finish() }
+        etPassword.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val password = s?.toString() ?: ""
+                if (password.isEmpty()) {
+                    tvPassStrength.visibility = View.GONE
+                    ivPassMeter.visibility = View.GONE
+                    return
+                }
+                tvPassStrength.visibility = View.VISIBLE
+                ivPassMeter.visibility = View.VISIBLE
+                val result = checkPassword(password)
+                tvPassStrength.text = "Password strength: ${result.strength}"
+            }
+        })
     }
 
     // checks email format, password length, and confirmation

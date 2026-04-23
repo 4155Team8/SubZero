@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS subscription (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (category_id) REFERENCES category(id),
   FOREIGN KEY (billing_cycle_id) REFERENCES billingcycle(id)
 );

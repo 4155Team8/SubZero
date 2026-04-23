@@ -2,6 +2,7 @@ package com.example.subzero.network
 
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
@@ -15,6 +16,7 @@ data class newEmailResponse(val message: String?, val user: updatedEmailUser)
 data class updatedEmailUser(val email: String?)
 data class newPasswordRequest(val password: String?)
 data class newPasswordResponse(val message: String?, val user: updatedPasswordUser)
+data class deleteAccResponse(val message: String?)
 data class updatedPasswordUser(val password_hash: String?)
 data class AuthUser(val id: Int, val email: String)
 data class NameRequest(val name: String?)
@@ -92,4 +94,9 @@ interface ApiService {
     suspend fun getProfile(
         @Header("Authorization") token: String
     ): Response<ProfileResponse>
+
+    @DELETE("auth/delete-account")
+    suspend fun deleteAccount(
+        @Header("Authorization") token: String
+    ): Response<deleteAccResponse>
 }

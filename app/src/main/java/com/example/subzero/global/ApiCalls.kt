@@ -120,4 +120,15 @@ class ApiCalls {
         }
     }
 
+    suspend fun deleteAccount(cont: Context): deleteAccResponse? {
+        val token = SessionManager.getToken((cont)) ?: return null
+        return try {
+            val delRes = ApiClient.instance.deleteAccount("Bearer $token")
+            if (delRes.isSuccessful) delRes.body() else null
+        } catch (e: Exception) {
+            Log.e("Error", e.localizedMessage ?: "", e)
+            null
+        }
+    }
+
 }

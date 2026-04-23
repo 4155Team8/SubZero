@@ -14,6 +14,16 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.work.Worker
+import androidx.work.WorkerParameters
+import com.example.subzero.global.NotificationScheduler.scheduleReminderNotification
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
 
@@ -38,6 +48,16 @@ class MainActivity : AppCompatActivity() {
         initViews()
         setDemoHintText()
         setupClickListeners()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1001)
+        }
+        val threeDaysInMillis = TimeUnit.DAYS.toMillis(3)
+        scheduleReminderNotification(
+            context = this,
+            title   = "Netflix renewing soon",
+            body    = "Your subscription renews in 3 days",
+            delayInMillis = threeDaysInMillis
+        )
     }
 
     private fun initViews() {
@@ -131,4 +151,6 @@ class MainActivity : AppCompatActivity() {
     private fun navigateToDashboard() {
         startActivity(Intent(this, InsightsActivity::class.java))
     }
+
+
 }
