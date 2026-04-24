@@ -92,20 +92,7 @@
                     </LinearLayout>
                 </RelativeLayout>
             </androidx.cardview.widget.CardView>
-            <!-- Clear All Button -->
-            <TextView
-                android:id="@+id/btnClearAll"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Clear All"
-                android:textColor="@color/purple_main"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:padding="8sp"
-                android:clickable="true"
-                android:focusable="true"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@id/tvRecentHeader"/>
+
             <!-- Recent Activity Header -->
             <RelativeLayout
                 android:layout_width="match_parent"
@@ -113,7 +100,6 @@
                 android:layout_marginTop="32dp">
 
                 <TextView
-                    android:id="@+id/tvRecentHeader"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Recent Activity"
@@ -130,7 +116,7 @@
                     android:layout_centerVertical="true"
                     android:background="@drawable/bg_badge_blue"
                     android:text="0 new"
-                    android:textColor="#3B1FF0"
+                    android:textColor="@color/nav_active"
                     android:textSize="12sp"
                     android:textStyle="bold" />
             </RelativeLayout>
@@ -220,13 +206,13 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_noti_bell"
-                app:tint="@color/purple_main" />
+                app:tint="@color/nav_active" />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="Alerts"
-                android:textColor="@color/purple_main"
+                android:textColor="@color/nav_active"
                 android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>

@@ -65,7 +65,7 @@ open class InsightsActivity : AppCompatActivity() {
 
     // sets up click functions for navbar
     private fun setupBottomNav() {
-        findViewById<LinearLayout>(R.id.navManage).setOnClickListener { /* nothing yet */ }
+        findViewById<LinearLayout>(R.id.navManage).setOnClickListener { navigateToDashboard() }
         findViewById<LinearLayout>(R.id.navInsights).setOnClickListener { /* already here */ }
         findViewById<LinearLayout>(R.id.navAlerts).setOnClickListener {
             navigateToAlerts()
@@ -80,16 +80,16 @@ open class InsightsActivity : AppCompatActivity() {
         val token = SessionManager.getToken(this) ?: return
 
         lifecycleScope.launch {
-                // grab the subscriptions for the given account
-                val subRes = calls.loadSubscriptions(this@InsightsActivity)
-                // create a list w the subscriptions
-                val subscriptions: List<SubscriptionResponse> = subRes ?: emptyList()
-                // rendering logic
-                if (subscriptions.isEmpty()) {
-                    showEmptyState()
-                } else {
-                    renderInsights(subscriptions)
-                }
+            // grab the subscriptions for the given account
+            val dashboard = calls.loadDashboard(this@InsightsActivity)
+            // create a list w the subscriptions
+            val subscriptions: List<SubscriptionResponse> = dashboard?.subscriptions ?: emptyList()
+            // rendering logic
+            if (subscriptions.isEmpty()) {
+                showEmptyState()
+            } else {
+                renderInsights(subscriptions)
+            }
         }
     }
 
@@ -330,6 +330,9 @@ open class InsightsActivity : AppCompatActivity() {
     }
     private fun navigateToAlerts() {
         startActivity(Intent(this, AlertsActivity::class.java))
+    }
+    private fun navigateToDashboard() {
+        startActivity(Intent(this, DashboardActivity::class.java))
     }
 
 }

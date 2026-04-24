@@ -472,7 +472,7 @@
                 android:layout_height="24dp"
                 android:contentDescription="@string/nav_profile"
                 android:src="@drawable/ic_person"
-                app:tint="@color/primary" />
+                app:tint="@color/nav_active" />
 
             <TextView
                 android:id="@+id/tvNavProfile"
@@ -480,7 +480,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="@string/nav_profile"
-                android:textColor="@color/primary"
+                android:textColor="@color/nav_active"
                 android:textSize="12sp" />
         </LinearLayout>
 

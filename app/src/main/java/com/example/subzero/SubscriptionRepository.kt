@@ -2,6 +2,7 @@ package com.example.subzero
 
 import android.content.Context
 import com.example.subzero.global.ApiCalls
+import com.example.subzero.network.MonthlySpendResponse
 import com.example.subzero.network.SubscriptionResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,14 +14,30 @@ class SubscriptionRepository(private val context: Context) {
     private val _items = MutableStateFlow<List<Subscription>>(emptyList())
     val items: StateFlow<List<Subscription>> = _items
 
+    private val _monthlyBudget = MutableStateFlow(0.0)
+    val monthlyBudget: StateFlow<Double> = _monthlyBudget
+
+    private val _monthlySpendHistory = MutableStateFlow<List<MonthlySpendResponse>>(emptyList())
+    val monthlySpendHistory: StateFlow<List<MonthlySpendResponse>> = _monthlySpendHistory
+
     // nextId starts high to avoid collisions with server IDs
     private var nextId: Int = 100_000
 
     suspend fun loadFromApi() {
-        val result = calls.loadSubscriptions(context)
-        if (result != null) {
-            _items.value = result.map { it.toSubscription() }
+        val dashboard = calls.loadDashboard(context)
+        if (dashboard != null) {
+            _items.value = dashboard.subscriptions.map { it.toSubscription() }
+            _monthlyBudget.value = dashboard.monthly_budget
+            _monthlySpendHistory.value = dashboard.monthly_spend
         }
+    }
+
+    suspend fun updateBudget(budget: Double): Boolean {
+        val result = calls.updateBudget(context, budget)
+        return if (result != null) {
+            _monthlyBudget.value = result.monthly_budget
+            true
+        } else false
     }
 
     fun add(name: String, cost: Double, billingDay: Int, month: String) {
@@ -58,25 +75,18 @@ class SubscriptionRepository(private val context: Context) {
         require(name.isNotBlank()) { "Name is required" }
         require(cost >= 0) { "Cost must be >= 0" }
         require(billingDay in 1..31) { "Billing day must be 1-31" }
-        require(month in listOf("Nov", "Dec", "Jan", "Feb", "Mar", "Apr")) {
-            "Month must be Nov, Dec, Jan, Feb, Mar, or Apr"
-        }
     }
 }
 
 /**
  * Maps the API response model to the local Subscription domain model.
- *
- * The server provides a billing_cycle string ("monthly", "yearly", etc.) and a
- * created_at timestamp.  We derive a display month from created_at and treat
- * the billing_cycle as the billingDay placeholder (defaulting to 1) since the
- * API does not currently expose a numeric billing-day field.
+ * Uses renewal_date to derive the display month.
  */
 private fun SubscriptionResponse.toSubscription(): Subscription {
-    // Parse month abbreviation from created_at (e.g. "2024-11-03T..." → "Nov")
+    val dateStr = renewal_date.ifBlank { created_at }
     val month = runCatching {
         val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-        val date = sdf.parse(created_at.take(10))
+        val date = sdf.parse(dateStr.take(10))
         java.text.SimpleDateFormat("MMM", java.util.Locale.getDefault()).format(date!!)
     }.getOrElse { "Jan" }
 
@@ -85,8 +95,10 @@ private fun SubscriptionResponse.toSubscription(): Subscription {
         name = name,
         cost = cost,
         month = month,
-        billingDay = 1, // API does not expose a billing-day integer yet
-        renewalDate = updated_at,
+        billingDay = 1,
+        categoryId = null,
+        billingCycleId = null,
+        renewalDate = renewal_date,
         isActive = true
     )
 }

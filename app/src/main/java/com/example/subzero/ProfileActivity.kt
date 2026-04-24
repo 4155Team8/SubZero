@@ -69,7 +69,7 @@ class ProfileActivity : AppCompatActivity() {
 
 
     private fun setupBottomNav() {
-        findViewById<LinearLayout>(R.id.navManage).setOnClickListener { /* nothing yet */ }
+        findViewById<LinearLayout>(R.id.navManage).setOnClickListener { navigateToDashboard() }
         findViewById<LinearLayout>(R.id.navInsights).setOnClickListener { navigateToInsights() }
         findViewById<LinearLayout>(R.id.navAlerts).setOnClickListener { navigateToAlerts() }
         findViewById<LinearLayout>(R.id.navProfile).setOnClickListener { /* already here */ }
@@ -102,13 +102,13 @@ class ProfileActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             val profile = calls.loadProfile(this@ProfileActivity)
-            val subRes = calls.loadSubscriptions(this@ProfileActivity)
+            val dashboard = calls.loadDashboard(this@ProfileActivity)
             Log.d("current email", ": " + profile?.email)
             val email = profile?.email ?: "Not available"
             val name = profile?.name ?: "John Doe"
             val remindersEnabled = profile?.reminders_enabled == 1
             val memberSince = profile?.created_at
-            val subs: List<SubscriptionResponse> = subRes ?: emptyList()
+            val subs: List<SubscriptionResponse> = dashboard?.subscriptions ?: emptyList()
             val numSubs = subs.size
 
             val userProfile = UserProfile(

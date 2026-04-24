@@ -4,44 +4,16 @@ package com.example.subzero
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.TrendingUp
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,7 +21,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.subzero.network.MonthlySpendResponse
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -75,20 +49,68 @@ fun SubscriptionDashboardScreen(
     onGoToAlerts: () -> Unit = {},
     onGoToProfile: () -> Unit = {}
 ) {
-    val allItems by vm.items.collectAsState()
+    val allItems          by vm.items.collectAsState()
+    val monthlyBudget     by vm.monthlyBudget.collectAsState()
+    val monthlyHistory    by vm.monthlySpendHistory.collectAsState()
+    val isLoading         by vm.isLoading.collectAsState()
+    val budgetResult      by vm.budgetUpdateResult.collectAsState()
     val currency = remember { NumberFormat.getCurrencyInstance(Locale.US) }
 
-    val months = listOf("Nov", "Dec", "Jan", "Feb", "Mar", "Apr")
-    var selectedMonth by remember { mutableStateOf("Nov") }
-    var selectedTab   by remember { mutableStateOf(DashboardTab.Manage) }
+    // Build month labels from API history; fall back to last 6 calendar months
+    val months = remember(monthlyHistory) {
+        monthlyHistory.map { it.month_label }.ifEmpty {
+            listOf("Nov", "Dec", "Jan", "Feb", "Mar", "Apr")
+        }
+    }
+
+    var selectedMonth     by remember(months) { mutableStateOf(months.lastOrNull() ?: "Apr") }
+    var selectedTab       by remember { mutableStateOf(DashboardTab.Manage) }
+    var showBudgetDialog  by remember { mutableStateOf(false) }
+
+    // Snackbar for budget save feedback
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(budgetResult) {
+        if (budgetResult != null) {
+            snackbarHostState.showSnackbar(
+                if (budgetResult == true) "Budget saved!" else "Failed to save budget"
+            )
+            vm.clearBudgetResult()
+        }
+    }
+
+    // Compute spend for selected month — prefer API history, fall back to subscription list
+    val selectedHistoryEntry = monthlyHistory.find { it.month_label == selectedMonth }
+    val totalSpend = selectedHistoryEntry?.total_spend
+        ?: DashboardUtils.calculateTotalSpend(
+            DashboardUtils.filterSubscriptionsByMonth(allItems, selectedMonth)
+        )
+    val remainingBudget = DashboardUtils.calculateRemainingBudget(monthlyBudget, totalSpend)
+
+    // Build chart data from history if available, else derive from subscriptions
+    val monthlyChartData: List<MonthlySpend> = remember(monthlyHistory, allItems, months) {
+        if (monthlyHistory.isNotEmpty()) {
+            monthlyHistory.map { MonthlySpend(it.month_label, it.total_spend) }
+        } else {
+            DashboardUtils.buildMonthlySpendData(allItems, months)
+        }
+    }
 
     val selectedMonthItems = DashboardUtils.filterSubscriptionsByMonth(allItems, selectedMonth)
-    val totalSpend         = DashboardUtils.calculateTotalSpend(selectedMonthItems)
-    val monthlyBudget      = 200.0
-    val remainingBudget    = DashboardUtils.calculateRemainingBudget(monthlyBudget, totalSpend)
-    val monthlyData        = DashboardUtils.buildMonthlySpendData(allItems, months)
+
+    if (showBudgetDialog) {
+        BudgetEditDialog(
+            currentBudget = monthlyBudget,
+            currency = currency,
+            onDismiss = { showBudgetDialog = false },
+            onSave = { newBudget ->
+                vm.updateBudget(newBudget)
+                showBudgetDialog = false
+            }
+        )
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onGoToManage,
@@ -100,11 +122,11 @@ fun SubscriptionDashboardScreen(
         },
         bottomBar = {
             DashboardBottomBar(
-                selectedTab    = selectedTab,
-                onManageClick  = { selectedTab = DashboardTab.Manage;   onGoToManage() },
+                selectedTab     = selectedTab,
+                onManageClick   = { selectedTab = DashboardTab.Manage;   onGoToManage() },
                 onInsightsClick = { selectedTab = DashboardTab.Insights; onGoToInsights() },
-                onAlertsClick  = { selectedTab = DashboardTab.Alerts;   onGoToAlerts() },
-                onProfileClick = { selectedTab = DashboardTab.Profile;  onGoToProfile() }
+                onAlertsClick   = { selectedTab = DashboardTab.Alerts;   onGoToAlerts() },
+                onProfileClick  = { selectedTab = DashboardTab.Profile;  onGoToProfile() }
             )
         },
         containerColor = Gray50
@@ -115,79 +137,144 @@ fun SubscriptionDashboardScreen(
                 .background(Brush.verticalGradient(listOf(Blue500, Purple500, Indigo500)))
                 .padding(innerPadding)
         ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                item { Spacer(modifier = Modifier.height(16.dp)) }
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = White
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
 
-                item { DashboardHeader(selectedMonth) }
+                    item { DashboardHeader(selectedMonth) }
 
-                item {
-                    DashboardMonthSelectorRow(
-                        months          = months,
-                        selectedMonth   = selectedMonth,
-                        onMonthSelected = { selectedMonth = it }
-                    )
-                }
-
-                item {
-                    SpendingChartCard(
-                        monthlyData   = monthlyData,
-                        selectedMonth = selectedMonth
-                    )
-                }
-
-                item {
-                    SummaryCard(
-                        budget      = monthlyBudget,
-                        totalSpend  = totalSpend,
-                        remaining   = remainingBudget,
-                        currency    = currency
-                    )
-                }
-
-                item {
-                    Text(
-                        text      = "${selectedMonth.uppercase()} SUBSCRIPTIONS",
-                        color     = White.copy(alpha = 0.96f),
-                        style     = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                if (selectedMonthItems.isEmpty()) {
                     item {
-                        AddFirstSubscriptionCard(
-                            month           = selectedMonth,
-                            onAddFirstClick = onGoToManage
+                        DashboardMonthSelectorRow(
+                            months          = months,
+                            selectedMonth   = selectedMonth,
+                            onMonthSelected = { selectedMonth = it }
                         )
                     }
-                } else {
+
                     item {
-                        ThisMonthSubscriptionsCard(
-                            month         = selectedMonth,
-                            items         = selectedMonthItems,
-                            currency      = currency,
-                            onManageClick = onGoToManage
+                        SpendingChartCard(
+                            monthlyData   = monthlyChartData,
+                            selectedMonth = selectedMonth
                         )
                     }
 
-                    items(selectedMonthItems) { sub ->
-                        IndividualSubscriptionCard(
-                            subscription  = sub,
-                            currency      = currency,
-                            onManageClick = onGoToManage
+                    item {
+                        SummaryCard(
+                            budget     = monthlyBudget,
+                            totalSpend = totalSpend,
+                            remaining  = remainingBudget,
+                            currency   = currency,
+                            onEditBudget = { showBudgetDialog = true }
                         )
                     }
+
+                    item {
+                        Text(
+                            text       = "${selectedMonth.uppercase()} SUBSCRIPTIONS",
+                            color      = White.copy(alpha = 0.96f),
+                            style      = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    if (selectedMonthItems.isEmpty()) {
+                        item {
+                            AddFirstSubscriptionCard(
+                                month           = selectedMonth,
+                                onAddFirstClick = onGoToManage
+                            )
+                        }
+                    } else {
+                        item {
+                            ThisMonthSubscriptionsCard(
+                                month         = selectedMonth,
+                                items         = selectedMonthItems,
+                                currency      = currency,
+                                onManageClick = onGoToManage
+                            )
+                        }
+
+                        items(selectedMonthItems) { sub ->
+                            IndividualSubscriptionCard(
+                                subscription  = sub,
+                                currency      = currency,
+                                onManageClick = onGoToManage
+                            )
+                        }
+                    }
+
+                    item { Spacer(modifier = Modifier.height(100.dp)) }
                 }
-
-                item { Spacer(modifier = Modifier.height(100.dp)) }
             }
         }
     }
+}
+
+// ── Budget Edit Dialog ────────────────────────────────────────────────────────
+
+@Composable
+private fun BudgetEditDialog(
+    currentBudget: Double,
+    currency: NumberFormat,
+    onDismiss: () -> Unit,
+    onSave: (Double) -> Unit
+) {
+    var budgetText by remember { mutableStateOf(if (currentBudget > 0) currentBudget.toString() else "") }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Set Monthly Budget", fontWeight = FontWeight.Bold) },
+        text = {
+            Column {
+                Text(
+                    "Enter your monthly subscription budget:",
+                    color = Gray500,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = budgetText,
+                    onValueChange = {
+                        budgetText = it
+                        error = null
+                    },
+                    label = { Text("Budget (\$)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    isError = error != null,
+                    supportingText = error?.let { { Text(it, color = MaterialTheme.colorScheme.error) } }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val parsed = budgetText.toDoubleOrNull()
+                when {
+                    parsed == null -> error = "Please enter a valid number"
+                    parsed < 0     -> error = "Budget cannot be negative"
+                    else           -> onSave(parsed)
+                }
+            }) {
+                Text("Save", color = Blue600, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = Gray500)
+            }
+        }
+    )
 }
 
 // ── Header ────────────────────────────────────────────────────────────────────
@@ -278,6 +365,14 @@ private fun SpendingChartCard(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Bottom
                     ) {
+                        if (item.amount > 0) {
+                            Text(
+                                text  = "$${item.amount.toInt()}",
+                                color = White.copy(alpha = 0.75f),
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                        }
                         Box(
                             modifier = Modifier
                                 .width(32.dp)
@@ -301,7 +396,8 @@ private fun SummaryCard(
     budget: Double,
     totalSpend: Double,
     remaining: Double,
-    currency: NumberFormat
+    currency: NumberFormat,
+    onEditBudget: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -309,24 +405,58 @@ private fun SummaryCard(
         colors   = CardDefaults.cardColors(containerColor = White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            SummaryRow("Monthly Budget",      currency.format(budget),     Gray700)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text       = "Monthly Summary",
+                    style      = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color      = Gray700,
+                    modifier   = Modifier.weight(1f)
+                )
+                TextButton(onClick = onEditBudget) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Edit budget",
+                        modifier = Modifier.size(16.dp),
+                        tint = Blue600
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Budget", color = Blue600, style = MaterialTheme.typography.labelMedium)
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            SummaryRow("Monthly Budget",     currency.format(budget),     Gray700)
             Spacer(modifier = Modifier.height(10.dp))
-            SummaryRow("Subscription Spend",  currency.format(totalSpend), Gray700)
+            SummaryRow("Subscription Spend", currency.format(totalSpend), Gray700)
             Spacer(modifier = Modifier.height(10.dp))
             SummaryRow(
                 "Remaining Budget",
                 currency.format(remaining),
                 if (remaining >= 0) Green500 else Orange500
             )
-            Spacer(modifier = Modifier.height(14.dp))
+            if (budget > 0) {
+                Spacer(modifier = Modifier.height(12.dp))
+                val pct = (totalSpend / budget * 100).toInt().coerceIn(0, 100)
+                LinearProgressIndicator(
+                    progress = { (pct / 100f).coerceIn(0f, 1f) },
+                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+                    color    = if (pct < 80) Blue500 else Orange500,
+                    trackColor = Gray200
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+            }
+            Spacer(modifier = Modifier.height(6.dp))
             HorizontalDivider(color = Gray200)
             Spacer(modifier = Modifier.height(10.dp))
             Text(
-                text      = if (budget > 0) "${DashboardUtils.budgetPercentLeft(budget, remaining)}% left for other spending."
-                else "No budget set.",
-                color     = Gray500,
-                style     = MaterialTheme.typography.bodySmall,
-                modifier  = Modifier.align(Alignment.CenterHorizontally)
+                text     = if (budget > 0) "${DashboardUtils.budgetPercentLeft(budget, remaining)}% of budget remaining."
+                else "No budget set. Tap 'Budget' to set one.",
+                color    = Gray500,
+                style    = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             )
         }
     }
@@ -404,7 +534,9 @@ private fun IndividualSubscriptionCard(
             Text(subscription.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Gray700)
             Spacer(modifier = Modifier.height(8.dp))
             Text("Monthly Cost: ${currency.format(subscription.cost)}", color = Gray700)
-            Text("Billing Day: ${subscription.billingDay}", color = Gray500)
+            if (subscription.renewalDate != null) {
+                Text("Next Renewal: ${subscription.renewalDate.take(10)}", color = Gray500)
+            }
             Text("Month: ${subscription.month}", color = Gray500)
             Spacer(modifier = Modifier.height(12.dp))
             TextButton(onClick = onManageClick) { Text("View in Manage", color = Blue600) }
