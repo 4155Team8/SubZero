@@ -7,9 +7,12 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
+import android.widget.Button
+import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.subzero.global.ApiCalls
@@ -42,7 +45,10 @@ open class InsightsActivity : AppCompatActivity() {
     private lateinit var tvEmptyChart: TextView
     private lateinit var legendContainer: LinearLayout
     private lateinit var subscriptionsByCategoryContainer: LinearLayout
+    private lateinit var filterButton: Button
     private var calls = ApiCalls()
+    private val selectedCategories = mutableSetOf<String>()
+    private var allCategories = listOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +67,8 @@ open class InsightsActivity : AppCompatActivity() {
         tvEmptyChart       = findViewById(R.id.tvEmptyChart)
         legendContainer    = findViewById(R.id.legendContainer)
         subscriptionsByCategoryContainer = findViewById(R.id.subscriptionsByCategoryContainer)
+        filterButton       = findViewById(R.id.filterButton)
+        filterButton.setOnClickListener { showCategoryFilterDialog() }
     }
 
     // sets up click functions for navbar
@@ -80,23 +88,29 @@ open class InsightsActivity : AppCompatActivity() {
         val token = SessionManager.getToken(this) ?: return
 
         lifecycleScope.launch {
-                // grab the subscriptions for the given account
-                val subRes = calls.loadSubscriptions(this@InsightsActivity)
-                // create a list w the subscriptions
-                val subscriptions: List<SubscriptionResponse> = subRes ?: emptyList()
-                // rendering logic
-                if (subscriptions.isEmpty()) {
-                    showEmptyState()
-                } else {
-                    renderInsights(subscriptions)
-                }
+            // grab the subscriptions for the given account
+            val subRes = calls.loadSubscriptions(this@InsightsActivity)
+            // create a list w the subscriptions
+            val subscriptions: List<SubscriptionResponse> = subRes ?: emptyList()
+            allCategories = subscriptions.map { it.category }.distinct()
+            // rendering logic
+            if (subscriptions.isEmpty()) {
+                showEmptyState()
+            } else {
+                renderInsights(subscriptions)
+            }
         }
     }
 
 
     private fun renderInsights(subscriptions: List<SubscriptionResponse>) {
+        val filteredSubs = if (selectedCategories.isEmpty()) subscriptions else subscriptions.filter { it.category in selectedCategories }
+        if (filteredSubs.isEmpty()) {
+            showEmptyState()
+            return
+        }
         // monthly total
-        val monthlyTotal: Double = subscriptions.sumOf { sub: SubscriptionResponse ->
+        val monthlyTotal: Double = filteredSubs.sumOf { sub: SubscriptionResponse ->
             normaliseToMonthly(sub.cost, sub.billing_cycle)
         }
         tvMonthlyTotal.text  = "$%.2f".format(monthlyTotal)
@@ -105,7 +119,7 @@ open class InsightsActivity : AppCompatActivity() {
 
         // group by category
         val byCategory: Map<String, List<SubscriptionResponse>> =
-            subscriptions.groupBy { sub: SubscriptionResponse -> sub.category }
+            filteredSubs.groupBy { sub: SubscriptionResponse -> sub.category }
 
         val categoryTotals: List<Pair<String, Double>> = byCategory
             .map { entry: Map.Entry<String, List<SubscriptionResponse>> ->
@@ -151,6 +165,30 @@ open class InsightsActivity : AppCompatActivity() {
         tvChangeLabel.text      = "No subscriptions yet"
         donutChart.visibility   = View.GONE
         tvEmptyChart.visibility = View.VISIBLE
+    }
+
+    private fun showCategoryFilterDialog() {
+        val checkBoxes = allCategories.map { category ->
+            CheckBox(this).apply {
+                text = category
+                isChecked = category in selectedCategories
+            }
+        }
+        val dialogView = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32, 16, 32, 16)
+            checkBoxes.forEach { addView(it) }
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Select Categories")
+            .setView(dialogView)
+            .setPositiveButton("Apply") { _, _ ->
+                selectedCategories.clear()
+                checkBoxes.filter { it.isChecked }.forEach { selectedCategories.add(it.text.toString()) }
+                loadInsights() // Reload to apply filter
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun buildCategoryGroup(

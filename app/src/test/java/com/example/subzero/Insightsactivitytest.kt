@@ -394,4 +394,105 @@ class InsightsActivityTest {
         val entertainmentTotal = byCategory["Entertainment"]?.sumOf { it.cost } ?: 0.0
         assertEquals(48.98, entertainmentTotal, 0.01)
     }
+
+    // ------------------- Tests for Category Filtering -------------------
+
+    @Test
+    fun `filtering with empty selected categories shows all subscriptions`() {
+        val subscriptions = listOf(
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01")
+        )
+        val selectedCategories = mutableSetOf<String>()
+        val filteredSubs = if (selectedCategories.isEmpty()) subscriptions else subscriptions.filter { it.category in selectedCategories }
+        assertEquals(3, filteredSubs.size)
+    }
+
+    @Test
+    fun `filtering with specific categories shows only matching subscriptions`() {
+        val subscriptions = listOf(
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(4, "Hulu", 7.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01")
+        )
+        val selectedCategories = mutableSetOf("Entertainment")
+        val filteredSubs = if (selectedCategories.isEmpty()) subscriptions else subscriptions.filter { it.category in selectedCategories }
+        assertEquals(2, filteredSubs.size)
+        assertTrue(filteredSubs.all { it.category == "Entertainment" })
+    }
+
+    @Test
+    fun `filtering with multiple categories shows matching subscriptions`() {
+        val subscriptions = listOf(
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(4, "Adobe", 54.99, "Productivity", "monthly", "2024-01-01", "2024-01-01")
+        )
+        val selectedCategories = mutableSetOf("Entertainment", "Music")
+        val filteredSubs = if (selectedCategories.isEmpty()) subscriptions else subscriptions.filter { it.category in selectedCategories }
+        assertEquals(2, filteredSubs.size)
+        assertTrue(filteredSubs.all { it.category in selectedCategories })
+    }
+
+    @Test
+    fun `filtering with non-existent category shows no subscriptions`() {
+        val subscriptions = listOf(
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01")
+        )
+        val selectedCategories = mutableSetOf("NonExistent")
+        val filteredSubs = if (selectedCategories.isEmpty()) subscriptions else subscriptions.filter { it.category in selectedCategories }
+        assertEquals(0, filteredSubs.size)
+    }
+
+    @Test
+    fun `monthly total with filtering is correct`() {
+        val subscriptions = listOf(
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01")
+        )
+        val selectedCategories = mutableSetOf("Entertainment", "Music")
+        val filteredSubs = if (selectedCategories.isEmpty()) subscriptions else subscriptions.filter { it.category in selectedCategories }
+        val monthlyTotal = filteredSubs.sumOf { normaliseToMonthly(it.cost, it.billing_cycle) }
+        assertEquals(22.98, monthlyTotal, 0.01)
+    }
+
+    @Test
+    fun `category grouping with filtering excludes non-selected categories`() {
+        val subscriptions = listOf(
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01")
+        )
+        val selectedCategories = mutableSetOf("Entertainment")
+        val filteredSubs = if (selectedCategories.isEmpty()) subscriptions else subscriptions.filter { it.category in selectedCategories }
+        val byCategory = filteredSubs.groupBy { it.category }
+        assertEquals(1, byCategory.size)
+        assertTrue(byCategory.containsKey("Entertainment"))
+        assertFalse(byCategory.containsKey("Music"))
+        assertFalse(byCategory.containsKey("Food"))
+    }
+
+    @Test
+    fun `category totals with filtering are sorted correctly`() {
+        val subscriptions = listOf(
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(4, "Adobe", 54.99, "Productivity", "monthly", "2024-01-01", "2024-01-01")
+        )
+        val selectedCategories = mutableSetOf("Entertainment", "Productivity", "Food")
+        val filteredSubs = if (selectedCategories.isEmpty()) subscriptions else subscriptions.filter { it.category in selectedCategories }
+        val byCategory = filteredSubs.groupBy { it.category }
+        val categoryTotals = byCategory
+            .map { (cat, subs) -> Pair(cat, subs.sumOf { normaliseToMonthly(it.cost, it.billing_cycle) }) }
+            .sortedByDescending { it.second }
+        assertEquals("Productivity", categoryTotals[0].first)
+        assertEquals("Food", categoryTotals[1].first)
+        assertEquals("Entertainment", categoryTotals[2].first)
+    }
 }
