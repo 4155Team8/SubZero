@@ -146,4 +146,16 @@ class ApiCalls {
             null
         }
     }
+
+    suspend fun loadSubscriptions(cont: Context): List<SubscriptionResponse>? {
+        val token = SessionManager.getToken(cont) ?: return null
+        return try {
+            val response = ApiClient.instance.getDashboard("Bearer $token")
+            if (response.isSuccessful) response.body()?.subscriptions else null
+        } catch (e: Exception) {
+            Log.e("ApiCalls", "loadSubscriptions error: ${e.localizedMessage}", e)
+            Toast.makeText(cont, "Network error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            null
+        }
+    }
 }
