@@ -5,9 +5,11 @@ data class Subscription(
     val name: String,
     val cost: Double,
     val month: String,
-    val billingDay: Int = 1,
+    val billingDay: Int,
     val categoryId: Int? = null,
     val billingCycleId: Int? = null,
-    val renewalDate: String? = null,
+    val category: String? = null,       // ← add
+    val billingCycle: String? = null,   // ← add
+    val renewalDate: String? = null,    // ← add
     val isActive: Boolean = true
 )

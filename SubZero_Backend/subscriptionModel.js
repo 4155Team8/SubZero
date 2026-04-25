@@ -1,11 +1,11 @@
 const db = require("./db");
 
 async function createSubscription(data) {
-    const { name, cost, user_id, category_id, billing_cycle_id } = data;
+    const { name, cost, user_id, category_id, billing_cycle_id, renewal_date } = data;
 
     const [result] = await db.query(
-        "INSERT INTO subscription (name, cost, user_id, category_id, billing_cycle_id) VALUES (?, ?, ?, ?, ?)",
-        [name, cost, user_id, category_id, billing_cycle_id]
+        "INSERT INTO subscription (name, cost, user_id, category_id, billing_cycle_id, renewal_date) VALUES (?, ?, ?, ?, ?, ?)",
+        [name, cost, user_id, category_id, billing_cycle_id, renewal_date]
     );
 
     return { id: result.insertId, ...data };
@@ -19,6 +19,7 @@ async function getSubscriptionsByUser(user_id) {
             s.name,
             s.cost,
             s.created_at,
+            s.renewal_date,
             s.updated_at,
             c.name  AS category,
             bc.name AS billing_cycle

@@ -50,6 +50,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.subzero.network.BillingCycleResponse
+import com.example.subzero.network.CategoryResponse
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -71,6 +73,8 @@ fun SubscriptionManagementScreen(
     vm: SubscriptionViewModel,
     onGoToDashboard: () -> Unit
 ) {
+    val categories by vm.categories.collectAsState()
+    val billingCycles by vm.billingCycles.collectAsState()
     val items by vm.items.collectAsState()
     val currency = remember { NumberFormat.getCurrencyInstance(Locale.US) }
 
@@ -199,33 +203,33 @@ fun SubscriptionManagementScreen(
             }
         }
 
+        // Add dialog — uses API-backed categories/billing cycles
         if (showAddDialog) {
             SubscriptionDialog(
                 title = "Add Subscription",
                 buttonText = "Add",
                 initial = null,
-                defaultMonth = selectedMonth,
+                categories = categories,
+                billingCycles = billingCycles,
                 onDismiss = { showAddDialog = false },
-                onSave = { name, cost, billingDay, month ->
-                    try {
-                        vm.add(name, cost, billingDay, month)
-                        showAddDialog = false
-                        errorMessage = null
-                    } catch (e: IllegalArgumentException) {
-                        errorMessage = e.message ?: "Invalid input"
-                    }
+                onSave = { name, cost, renewalDate, categoryId, billingCycleId ->
+                    vm.add(name, cost, categoryId, billingCycleId, renewalDate)
+                    showAddDialog = false
                 }
             )
         }
 
+        // View dialog
         viewing?.let { subscription ->
             AlertDialog(
                 onDismissRequest = { viewing = null },
                 title = { Text(subscription.name) },
                 text = {
-                    Column {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text("Cost: ${currency.format(subscription.cost)}")
-                        Text("Billing Day: ${subscription.billingDay}")
+                        Text("Category: ${subscription.category ?: "—"}")
+                        Text("Billing Cycle: ${subscription.billingCycle ?: "—"}")
+                        Text("Renewal Date: ${subscription.renewalDate ?: "—"}")
                         Text("Month: ${subscription.month}")
                         Text("ID: ${subscription.id}")
                     }
@@ -238,25 +242,24 @@ fun SubscriptionManagementScreen(
             )
         }
 
+        // Edit dialog — also uses API-backed categories/billing cycles
         editing?.let { subscription ->
             SubscriptionDialog(
                 title = "Edit Subscription",
                 buttonText = "Save",
                 initial = subscription,
-                defaultMonth = subscription.month,
+                categories = categories,
+                billingCycles = billingCycles,
                 onDismiss = { editing = null },
-                onSave = { name, cost, billingDay, month ->
-                    try {
-                        vm.edit(subscription.id, name, cost, billingDay, month)
-                        editing = null
-                        errorMessage = null
-                    } catch (e: IllegalArgumentException) {
-                        errorMessage = e.message ?: "Invalid input"
-                    }
+                onSave = { name, cost, renewalDate, categoryId, billingCycleId ->
+                    vm.edit(subscription.id, name, cost, categoryId, billingCycleId, renewalDate)
+                    editing = null
+                    errorMessage = null
                 }
             )
         }
 
+        // Delete dialog
         deleting?.let { subscription ->
             AlertDialog(
                 onDismissRequest = { deleting = null },
@@ -284,6 +287,8 @@ fun SubscriptionManagementScreen(
     }
 }
 
+// ── Month selector ────────────────────────────────────────────────────────────
+
 @Composable
 private fun MonthSelectorRow(
     months: List<String>,
@@ -298,7 +303,6 @@ private fun MonthSelectorRow(
     ) {
         months.forEach { month ->
             val selected = month == selectedMonth
-
             Card(
                 modifier = Modifier.clickable { onMonthSelected(month) },
                 shape = RoundedCornerShape(10.dp),
@@ -317,6 +321,8 @@ private fun MonthSelectorRow(
         }
     }
 }
+
+// ── Summary card ──────────────────────────────────────────────────────────────
 
 @Composable
 private fun ManagementSummaryCard(
@@ -341,20 +347,14 @@ private fun ManagementSummaryCard(
                 fontWeight = FontWeight.Bold,
                 color = ManageGray700
             )
-
             Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Monthly Total: ${currency.format(total)}",
-                color = ManageGray700
-            )
-            Text(
-                text = "Subscriptions: $count",
-                color = ManageGray700
-            )
+            Text(text = "Monthly Total: ${currency.format(total)}", color = ManageGray700)
+            Text(text = "Subscriptions: $count", color = ManageGray700)
         }
     }
 }
+
+// ── Empty state ───────────────────────────────────────────────────────────────
 
 @Composable
 private fun EmptyManagementState(
@@ -390,6 +390,8 @@ private fun EmptyManagementState(
     }
 }
 
+// ── Subscription list card ────────────────────────────────────────────────────
+
 @Composable
 private fun SubscriptionManagementCard(
     sub: Subscription,
@@ -415,21 +417,11 @@ private fun SubscriptionManagementCard(
                 fontWeight = FontWeight.Bold,
                 color = ManageGray700
             )
-
             Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Cost: ${currency.format(sub.cost)}",
-                color = ManageGray700
-            )
-            Text(
-                text = "Billing Day: ${sub.billingDay}",
-                color = ManageGray700
-            )
-            Text(
-                text = "Month: ${sub.month}",
-                color = ManageGray500
-            )
+            Text(text = "Cost: ${currency.format(sub.cost)}", color = ManageGray700)
+            Text(text = "Category: ${sub.category ?: "—"}", color = ManageGray700)
+            Text(text = "Billing Cycle: ${sub.billingCycle ?: "—"}", color = ManageGray700)
+            Text(text = "Renewal: ${sub.renewalDate ?: "—"}", color = ManageGray500)
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -437,127 +429,161 @@ private fun SubscriptionManagementCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = onView) {
-                    Text("View", color = ManageBlue600)
-                }
-                TextButton(onClick = onEdit) {
-                    Text("Edit", color = ManageBlue600)
-                }
-                TextButton(onClick = onDelete) {
-                    Text("Delete", color = Color.Red)
-                }
+                TextButton(onClick = onView) { Text("View", color = ManageBlue600) }
+                TextButton(onClick = onEdit) { Text("Edit", color = ManageBlue600) }
+                TextButton(onClick = onDelete) { Text("Delete", color = Color.Red) }
             }
         }
     }
 }
+
+// ── Add / Edit dialog ─────────────────────────────────────────────────────────
 
 @Composable
 private fun SubscriptionDialog(
     title: String,
     buttonText: String,
     initial: Subscription?,
-    defaultMonth: String,
+    categories: List<CategoryResponse>,
+    billingCycles: List<BillingCycleResponse>,
     onDismiss: () -> Unit,
-    onSave: (String, Double, Int, String) -> Unit
+    onSave: (name: String, cost: Double, renewalDate: String, categoryId: Int, billingCycleId: Int) -> Unit
 ) {
-    val months = listOf("Nov", "Dec", "Jan", "Feb", "Mar", "Apr")
-
     var name by remember { mutableStateOf(initial?.name ?: "") }
     var costText by remember { mutableStateOf(initial?.cost?.toString() ?: "") }
-    var billingDayText by remember { mutableStateOf(initial?.billingDay?.toString() ?: "") }
-    var month by remember { mutableStateOf(initial?.month ?: defaultMonth) }
+    var renewalDate by remember { mutableStateOf(initial?.renewalDate?.take(10) ?: "") }
+
+    // Pre-select category/billing cycle if editing
+    var selectedCategory by remember {
+        mutableStateOf(categories.firstOrNull { it.id == initial?.categoryId })
+    }
+    var selectedBillingCycle by remember {
+        mutableStateOf(billingCycles.firstOrNull { it.id == initial?.billingCycleId })
+    }
+
     var localError by remember { mutableStateOf<String?>(null) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
+        title = { Text(title, fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
+                // Name
                 OutlinedTextField(
                     value = name,
-                    onValueChange = {
-                        name = it
-                        localError = null
-                    },
+                    onValueChange = { name = it; localError = null },
                     label = { Text("Name") },
-                    singleLine = true
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
+                // Cost
                 OutlinedTextField(
                     value = costText,
-                    onValueChange = {
-                        costText = it
-                        localError = null
-                    },
+                    onValueChange = { costText = it; localError = null },
                     label = { Text("Cost") },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
                 )
 
+                // Renewal date
                 OutlinedTextField(
-                    value = billingDayText,
-                    onValueChange = {
-                        billingDayText = it
-                        localError = null
-                    },
-                    label = { Text("Billing Day (1-31)") },
+                    value = renewalDate,
+                    onValueChange = { renewalDate = it; localError = null },
+                    label = { Text("Renewal Date (YYYY-MM-DD)") },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                Text(
-                    text = "Month",
-                    fontWeight = FontWeight.SemiBold
-                )
-
-                Row(
-                    modifier = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    months.forEach { item ->
-                        Card(
-                            modifier = Modifier.clickable {
-                                month = item
-                                localError = null
-                            },
-                            shape = RoundedCornerShape(10.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (month == item) ManageBlue600 else ManageGray100
-                            )
-                        ) {
-                            Text(
-                                text = item,
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                                color = if (month == item) ManageWhite else ManageGray700,
-                                fontWeight = FontWeight.SemiBold,
-                                maxLines = 1
-                            )
+                // Category picker
+                Text("Category", fontWeight = FontWeight.SemiBold, color = ManageGray700)
+                if (categories.isEmpty()) {
+                    Text("Loading categories…", color = ManageGray500,
+                        style = MaterialTheme.typography.bodySmall)
+                } else {
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        categories.forEach { cat ->
+                            val selected = selectedCategory?.id == cat.id
+                            Card(
+                                modifier = Modifier.clickable {
+                                    selectedCategory = cat
+                                    localError = null
+                                },
+                                shape = RoundedCornerShape(10.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (selected) ManageBlue600 else ManageGray100
+                                )
+                            ) {
+                                Text(
+                                    text = cat.name,
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                    color = if (selected) ManageWhite else ManageGray700,
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1
+                                )
+                            }
                         }
                     }
                 }
 
+                // Billing cycle picker
+                Text("Billing Cycle", fontWeight = FontWeight.SemiBold, color = ManageGray700)
+                if (billingCycles.isEmpty()) {
+                    Text("Loading billing cycles…", color = ManageGray500,
+                        style = MaterialTheme.typography.bodySmall)
+                } else {
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        billingCycles.forEach { cycle ->
+                            val selected = selectedBillingCycle?.id == cycle.id
+                            Card(
+                                modifier = Modifier.clickable {
+                                    selectedBillingCycle = cycle
+                                    localError = null
+                                },
+                                shape = RoundedCornerShape(10.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (selected) ManageBlue600 else ManageGray100
+                                )
+                            ) {
+                                Text(
+                                    text = cycle.name,
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                    color = if (selected) ManageWhite else ManageGray700,
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Error
                 localError?.let {
-                    Text(
-                        text = it,
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    Text(it, color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall)
                 }
             }
         },
         confirmButton = {
-            Button(
-                onClick = {
-                    val cost = costText.toDoubleOrNull()
-                    val billingDay = billingDayText.toIntOrNull()
-
-                    when {
-                        name.isBlank() -> localError = "Name is required"
-                        cost == null || cost < 0 -> localError = "Enter a valid cost"
-                        billingDay == null || billingDay !in 1..31 -> localError = "Billing day must be 1-31"
-                        else -> onSave(name, cost, billingDay, month)
-                    }
+            Button(onClick = {
+                val cost = costText.toDoubleOrNull()
+                when {
+                    name.isBlank() -> localError = "Name is required"
+                    cost == null || cost <= 0 -> localError = "Enter a valid cost"
+                    renewalDate.isBlank() -> localError = "Renewal date is required"
+                    selectedCategory == null -> localError = "Select a category"
+                    selectedBillingCycle == null -> localError = "Select a billing cycle"
+                    else -> onSave(name, cost, renewalDate, selectedCategory!!.id, selectedBillingCycle!!.id)
                 }
-            ) {
+            }) {
                 Text(buttonText)
             }
         },
@@ -568,6 +594,8 @@ private fun SubscriptionDialog(
         }
     )
 }
+
+// ── Bottom bar ────────────────────────────────────────────────────────────────
 
 @Composable
 private fun ManageBottomBar(

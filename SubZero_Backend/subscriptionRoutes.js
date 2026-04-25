@@ -173,7 +173,8 @@ router.post("/", authenticate, async (req, res) => {
             cost: Number(cost),
             user_id: req.user.id,
             category_id,
-            billing_cycle_id
+            billing_cycle_id,
+            renewal_date: req.body.renewal_date ?? null
         });
         res.status(201).json(subscription);
     } catch (err) {

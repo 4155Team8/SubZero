@@ -40,35 +40,41 @@ class SubscriptionRepository(private val context: Context) {
         } else false
     }
 
-    fun add(name: String, cost: Double, billingDay: Int, month: String) {
-        validate(name, cost, billingDay, month)
-        _items.update {
-            it + Subscription(
-                id = nextId++,
-                name = name.trim(),
-                cost = cost,
-                billingDay = billingDay,
-                month = month
-            )
-        }
+    suspend fun add(
+        name: String,
+        cost: Double,
+        categoryId: Int,
+        billingCycleId: Int,
+        renewalDate: String
+    ): Boolean {
+        val result = calls.createSubscription(context, name, cost, categoryId, billingCycleId, renewalDate)
+        return if (result != null) {
+            loadFromApi()
+            true
+        } else false
     }
 
-    fun edit(id: Int, name: String, cost: Double, billingDay: Int, month: String) {
-        validate(name, cost, billingDay, month)
-        _items.update { list ->
-            list.map { sub ->
-                if (sub.id == id) sub.copy(
-                    name = name.trim(),
-                    cost = cost,
-                    billingDay = billingDay,
-                    month = month
-                ) else sub
-            }
-        }
+    suspend fun edit(
+        id: Int,
+        name: String,
+        cost: Double,
+        categoryId: Int,
+        billingCycleId: Int,
+        renewalDate: String
+    ): Boolean {
+        val result = calls.updateSubscription(context, id, name, cost, categoryId, billingCycleId, renewalDate)
+        return if (result != null) {
+            loadFromApi()
+            true
+        } else false
     }
 
-    fun delete(id: Int) {
-        _items.update { list -> list.filterNot { it.id == id } }
+    suspend fun delete(id: Int): Boolean {
+        val result = calls.deleteSubscription(context, id)
+        return if (result) {
+            loadFromApi()
+            true
+        } else false
     }
 
     private fun validate(name: String, cost: Double, billingDay: Int, month: String) {
@@ -83,7 +89,7 @@ class SubscriptionRepository(private val context: Context) {
  * Uses renewal_date to derive the display month.
  */
 private fun SubscriptionResponse.toSubscription(): Subscription {
-    val dateStr = renewal_date.ifBlank { created_at }
+    val dateStr = renewal_date?.ifBlank { created_at } ?: created_at
     val month = runCatching {
         val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
         val date = sdf.parse(dateStr.take(10))
@@ -96,9 +102,12 @@ private fun SubscriptionResponse.toSubscription(): Subscription {
         cost = cost,
         month = month,
         billingDay = 1,
-        categoryId = null,
+        categoryId = null,    
         billingCycleId = null,
+        category = category, 
+        billingCycle = billing_cycle,
         renewalDate = renewal_date,
         isActive = true
     )
 }
+

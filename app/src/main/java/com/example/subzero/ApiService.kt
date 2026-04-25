@@ -56,7 +56,7 @@ data class SubscriptionResponse(
     val cost: Double,
     val category: String,
     val billing_cycle: String,
-    val renewal_date: String,
+    val renewal_date: String?,
     val created_at: String,
     val updated_at: String
 )
@@ -77,6 +77,18 @@ data class ProfileResponse(
     val name: String?,
     val reminders_enabled: Int,
     val monthly_budget: Double
+)
+
+data class CategoryResponse(
+    val id: Int,
+    val name: String,
+    val is_custom: Int
+)
+
+data class BillingCycleResponse(
+    val id: Int,
+    val name: String,
+    val is_custom: Int
 )
 
 // interface
@@ -124,4 +136,20 @@ interface ApiService {
     suspend fun deleteAccount(
         @Header("Authorization") token: String
     ): Response<deleteAccResponse>
+    
+    @POST("subscriptions")
+    suspend fun createSubscription(
+        @Header("Authorization") token: String,
+        @Body body: Map<String, @JvmSuppressWildcards Any>
+    ): Response<SubscriptionResponse>
+
+    @GET("subscriptions/categories")
+    suspend fun getCategories(
+        @Header("Authorization") token: String
+    ): Response<List<CategoryResponse>>
+
+    @GET("subscriptions/billing-cycles")
+    suspend fun getBillingCycles(
+        @Header("Authorization") token: String
+    ): Response<List<BillingCycleResponse>>
 }

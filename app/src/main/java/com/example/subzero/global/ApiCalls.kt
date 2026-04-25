@@ -1,6 +1,7 @@
 package com.example.subzero.global
 
 import android.content.Context
+import android.se.omapi.Session
 import android.util.Log
 import android.widget.Toast
 import com.example.subzero.SessionManager
@@ -155,6 +156,53 @@ class ApiCalls {
         } catch (e: Exception) {
             Log.e("ApiCalls", "loadSubscriptions error: ${e.localizedMessage}", e)
             Toast.makeText(cont, "Network error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            null
+        }
+    }
+    
+    suspend fun createSubscription(
+        cont: Context,
+        name: String,
+        cost: Double,
+        categoryId: Int,
+        billingCycleId: Int,
+        renewalDate: String
+    ): SubscriptionResponse? {
+        return try {
+            val token = SessionManager.getToken(cont) ?: return null
+            val body = mapOf(
+                "name" to name,
+                "cost" to cost,
+                "category_id" to categoryId,
+                "billing_cycle_id" to billingCycleId,
+                "renewal_date" to renewalDate
+            )
+            val response = ApiClient.instance.createSubscription("Bearer $token", body)
+            return if (response.isSuccessful) response.body() else null
+        } catch (e: Exception) {
+            Log.e("ApiCalls", "createSubscription error: $e")
+            null
+        }
+    }
+
+    suspend fun loadCategories(cont: Context): List<CategoryResponse>? {
+        val token = SessionManager.getToken(cont) ?: return null
+        return try {
+            val response = ApiClient.instance.getCategories("Bearer $token")
+            if (response.isSuccessful) response.body() else null
+        } catch (e: Exception) {
+            Log.e("ApiCalls", "loadCategories error: $e")
+            null
+        }
+    }
+
+    suspend fun loadBillingCycles(cont: Context): List<BillingCycleResponse>? {
+        val token = SessionManager.getToken(cont) ?: return null
+        return try {
+            val response = ApiClient.instance.getBillingCycles("Bearer $token")
+            if (response.isSuccessful) response.body() else null
+        } catch (e: Exception) {
+            Log.e("ApiCalls", "loadBillingCycles error: $e")
             null
         }
     }
