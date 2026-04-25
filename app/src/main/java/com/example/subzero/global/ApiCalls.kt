@@ -3,16 +3,9 @@ package com.example.subzero.global
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import androidx.lifecycle.lifecycleScope
-import com.example.subzero.ProfileActivity.UserProfile
 import com.example.subzero.SessionManager
 import com.example.subzero.network.*
 import com.example.subzero.network.ApiClient
-import com.example.subzero.network.NameRequest
-import com.example.subzero.network.NameResponse
-import com.example.subzero.network.ProfileResponse
-import com.example.subzero.network.SubscriptionResponse
-import kotlinx.coroutines.launch
 
 class ApiCalls {
     var util = Utility()
@@ -24,7 +17,9 @@ class ApiCalls {
         val createdAt: String?,
         val subscriptions: List<SubscriptionResponse>?,
         val numSubs: Int?,
-        val reminders: List<AlertResponse>?
+        val reminders: List<AlertResponse>?,
+        val monthlyBudget: Double,
+        val monthlySpend: List<MonthlySpendResponse>
     )
 
     suspend fun loadFull(cont: Context): fullResponse? {
@@ -39,18 +34,22 @@ class ApiCalls {
             val name = body?.name ?: "John Doe"
             val remindersEnabled = body?.reminders_enabled == 1
             val memberSince = util.formatToMonthYear(body?.created_at)
+            val monthlyBudget = body?.monthly_budget ?: 0.0
 
-            val subsResponse = ApiClient.instance.getSubscriptions("Bearer $token")
-            val subscriptions: List<SubscriptionResponse> = if (subsResponse.isSuccessful) subsResponse.body() ?: emptyList() else emptyList()
+            val dashResponse = ApiClient.instance.getDashboard("Bearer $token")
+            val subscriptions: List<SubscriptionResponse> =
+                if (dashResponse.isSuccessful) dashResponse.body()?.subscriptions ?: emptyList() else emptyList()
+            val monthlySpend: List<MonthlySpendResponse> =
+                if (dashResponse.isSuccessful) dashResponse.body()?.monthly_spend ?: emptyList() else emptyList()
             val numSubs = subscriptions.size
 
             val remResponse = ApiClient.instance.getReminders("Bearer $token")
-            val reminders: List<AlertResponse> = if (remResponse.isSuccessful) remResponse.body() ?: emptyList() else emptyList()
+            val reminders: List<AlertResponse> =
+                if (remResponse.isSuccessful) remResponse.body() ?: emptyList() else emptyList()
 
-            // debug
-            Log.d("Thing", email + name + memberSince)
+            Log.d("ApiCalls", "Loaded $numSubs subs, budget=$monthlyBudget")
 
-            fullResponse(email, name, remindersEnabled, memberSince, subscriptions, numSubs, reminders)
+            fullResponse(email, name, remindersEnabled, memberSince, subscriptions, numSubs, reminders, monthlyBudget, monthlySpend)
 
         } catch (e: Exception) {
             Log.e("PROFILE_ERROR", e.localizedMessage ?: "", e)
@@ -58,16 +57,19 @@ class ApiCalls {
             null
         }
     }
-    suspend fun loadSubscriptions(cont: Context): List<SubscriptionResponse>? {
+
+    suspend fun loadDashboard(cont: Context): DashboardResponse? {
         val token = SessionManager.getToken(cont) ?: return null
         return try {
-            val subResponse = ApiClient.instance.getSubscriptions("Bearer $token")
-            subResponse.body()
+            val response = ApiClient.instance.getDashboard("Bearer $token")
+            if (response.isSuccessful) response.body() else null
         } catch (e: Exception) {
+            Log.e("ApiCalls", "loadDashboard error: ${e.localizedMessage}", e)
             Toast.makeText(cont, "Network error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
             null
         }
     }
+
     suspend fun loadProfile(cont: Context): ProfileResponse? {
         val token = SessionManager.getToken(cont) ?: return null
         return try {
@@ -78,6 +80,7 @@ class ApiCalls {
             null
         }
     }
+
     suspend fun loadReminders(cont: Context): List<AlertResponse>? {
         val token = SessionManager.getToken(cont) ?: return null
         return try {
@@ -88,6 +91,7 @@ class ApiCalls {
             null
         }
     }
+
     suspend fun updateName(cont: Context, name: String?): NameResponse? {
         val token = SessionManager.getToken(cont) ?: return null
         return try {
@@ -95,6 +99,17 @@ class ApiCalls {
             if (nameResponse.isSuccessful) nameResponse.body() else null
         } catch (e: Exception) {
             Log.e("Error", e.localizedMessage ?: "", e)
+            null
+        }
+    }
+
+    suspend fun updateBudget(cont: Context, budget: Double): BudgetResponse? {
+        val token = SessionManager.getToken(cont) ?: return null
+        return try {
+            val response = ApiClient.instance.updateBudget("Bearer $token", BudgetRequest(budget))
+            if (response.isSuccessful) response.body() else null
+        } catch (e: Exception) {
+            Log.e("ApiCalls", "updateBudget error: ${e.localizedMessage}", e)
             null
         }
     }
@@ -109,6 +124,7 @@ class ApiCalls {
             null
         }
     }
+
     suspend fun updatePassword(cont: Context, password: String?): newPasswordResponse? {
         val token = SessionManager.getToken(cont) ?: return null
         return try {
@@ -120,4 +136,14 @@ class ApiCalls {
         }
     }
 
+    suspend fun deleteAccount(cont: Context): deleteAccResponse? {
+        val token = SessionManager.getToken((cont)) ?: return null
+        return try {
+            val delRes = ApiClient.instance.deleteAccount("Bearer $token")
+            if (delRes.isSuccessful) delRes.body() else null
+        } catch (e: Exception) {
+            Log.e("Error", e.localizedMessage ?: "", e)
+            null
+        }
+    }
 }

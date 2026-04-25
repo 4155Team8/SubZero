@@ -6,7 +6,8 @@ const {
     createSubscription,
     getSubscriptionsByUser,
     updateSubscription,
-    deleteSubscription
+    deleteSubscription,
+    clearRemindersForUser
 } = require("./subscriptionModel");
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -125,6 +126,46 @@ router.get("/", authenticate, async (req, res) => {
     }
 });
 
+// GET /subscriptions
+router.get("/", authenticate, async (req, res) => {
+    try {
+        const subscriptions = await getSubscriptionsByUser(req.user.id);
+
+        // Fetch user budget
+        const [userRows] = await db.query(
+            "SELECT monthly_budget FROM users WHERE id = ?",
+            [req.user.id]
+        );
+        const monthly_budget = parseFloat(userRows[0]?.monthly_budget) || 0;
+
+        // Build last 6 months of spend from subscription data
+        const now = new Date();
+        const monthlySpend = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const year = d.getFullYear();
+            const month = d.getMonth() + 1; // 1-12
+
+            const [histRows] = await db.query(
+                "SELECT total_spend FROM monthly_spend_history WHERE user_id = ? AND year = ? AND month = ?",
+                [req.user.id, year, month]
+            );
+
+            const monthLabel = d.toLocaleString("default", { month: "short" });
+            monthlySpend.push({
+                year,
+                month,
+                month_label: monthLabel,
+                total_spend: histRows.length > 0 ? parseFloat(histRows[0].total_spend) : 0
+            });
+        }
+
+        res.json({ subscriptions, monthly_budget, monthly_spend: monthlySpend });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // POST /subscriptions
 router.post("/", authenticate, async (req, res) => {
     const { name, cost, category_id, billing_cycle_id } = req.body;
@@ -189,6 +230,29 @@ router.delete("/:id", authenticate, async (req, res) => {
     }
 });
 
+// POST /subscriptions/monthly-spend
+// Upsert the recorded spend for a given year/month (called when a subscription renews)
+router.post("/monthly-spend", authenticate, async (req, res) => {
+    const { year, month, total_spend } = req.body;
+    if (!year || !month || total_spend === undefined) {
+        return res.status(400).json({ error: "year, month, and total_spend are required" });
+    }
+    if (month < 1 || month > 12) {
+        return res.status(400).json({ error: "month must be 1-12" });
+    }
+    try {
+        await db.query(
+            `INSERT INTO monthly_spend_history (user_id, year, month, total_spend)
+             VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE total_spend = VALUES(total_spend), updated_at = CURRENT_TIMESTAMP`,
+            [req.user.id, year, month, Number(total_spend)]
+        );
+        res.json({ message: "Monthly spend recorded", year, month, total_spend: Number(total_spend) });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // GET /subscriptions/reminders
 router.get("/reminders", authenticate, async (req, res) => {
     try {
@@ -210,5 +274,7 @@ router.get("/generate-reminders", authenticate, async (req, res) => {
         res.status(500).json({ error: "Failed to generate reminders" });
     }
 });
+
+
 
 module.exports = router;

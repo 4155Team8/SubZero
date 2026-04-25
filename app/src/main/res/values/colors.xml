@@ -3,6 +3,8 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="purple_main">#5B2EFA</color>
+    <color name="nav_active">#2563EB</color>
+    <color name="nav_inactive">#AAAAAA</color>
     <color name="gray_text">#666666</color>
     <color name="light_blue_bg">#E8F0FF</color>
     <color name="light_orange_bg">#FFF4E8</color>

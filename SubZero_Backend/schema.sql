@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   reminders_enabled BOOLEAN DEFAULT FALSE,
-  last_login TIMESTAMP NULL
+  last_login TIMESTAMP NULL,
+  monthly_budget DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (monthly_budget >= 0)
 );
 
 -- user_id NULL = global (seeded) option, user_id set = custom option created by that user
@@ -49,20 +50,25 @@ CREATE TABLE IF NOT EXISTS subscription (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (category_id) REFERENCES category(id),
   FOREIGN KEY (billing_cycle_id) REFERENCES billingcycle(id)
 );
 
 CREATE TABLE IF NOT EXISTS reminders(
   id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL, 
   subscription_id INT NOT NULL,
   reminder_date DATE NOT NULL,
   name VARCHAR(255) NOT NULL,
   description VARCHAR(1000) NOT NULL,
   sent_at TIMESTAMP NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY(subscription_id) REFERENCES subscription(id) ON DELETE CASCADE
+
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (subscription_id) REFERENCES subscription(id) ON DELETE CASCADE,
+
+  INDEX idx_user_id (user_id)
 );
 
 CREATE TABLE IF NOT EXISTS password_reset_tokens (
@@ -73,4 +79,17 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
   used TINYINT(1) DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Tracks actual monthly spend per user, populated when subscriptions renew
+CREATE TABLE IF NOT EXISTS monthly_spend_history (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  year INT NOT NULL,
+  month INT NOT NULL,           -- 1-12
+  total_spend DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_user_month (user_id, year, month)
 );

@@ -3,10 +3,27 @@ const router = express.Router();
 const { verifyToken } = require("./authMiddleware");
 const db = require("./db");
 
+
+// PUT /profile/budget — update monthly budget for the logged-in user
+router.put("/budget", verifyToken, async (req, res) => {
+    const { monthly_budget } = req.body;
+    if (monthly_budget === undefined || isNaN(monthly_budget) || Number(monthly_budget) < 0) {
+        return res.status(400).json({ error: "monthly_budget must be a non-negative number" });
+    }
+    try {
+        await db.query(
+            "UPDATE users SET monthly_budget = ? WHERE id = ?",
+            [Number(monthly_budget), req.user.id]
+        );
+        res.json({ message: "Budget updated successfully", monthly_budget: Number(monthly_budget) });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 router.get("/", verifyToken, async (req, res) => {
     try {
         const [rows] = await db.query(
-            "SELECT email, name, created_at, reminders_enabled FROM users WHERE id = ?",
+            "SELECT email, name, created_at, reminders_enabled, monthly_budget FROM users WHERE id = ?",
             [req.user.id]
         );
         res.json({
@@ -14,7 +31,8 @@ router.get("/", verifyToken, async (req, res) => {
             email: rows[0].email,
             name: rows[0].name,
             created_at: rows[0].created_at,
-            reminders_enabled: rows[0].reminders_enabled
+            reminders_enabled: rows[0].reminders_enabled,
+            monthly_budget: parseFloat(rows[0].monthly_budget) || 0
         });
     } catch (err) {
         res.status(500).json({ error: err.message });

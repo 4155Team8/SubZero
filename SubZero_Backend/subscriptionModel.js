@@ -32,6 +32,19 @@ async function getSubscriptionsByUser(user_id) {
     return rows;
 }
 
+async function clearRemindersForUser(user_id) {
+    const [result] = await db.query(
+        "DELETE FROM reminders WHERE user_id = ?",
+    [user_id]
+    );
+
+    if (result.affectedRows === 0) {
+        throw new Error("Reminders not found.")
+    }
+
+    return { message: "Deleted all." };
+}
+
 // Only updates if the subscription belongs to the user
 async function updateSubscription(id, user_id, data) {
     const { name, cost, category_id, billing_cycle_id } = data;
@@ -145,5 +158,6 @@ module.exports = {
     updateSubscription,
     deleteSubscription,
     getSubscriptionNeedingReminder,
-    generateReminders
+    generateReminders,
+    clearRemindersForUser
 };

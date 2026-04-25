@@ -73,7 +73,7 @@ open class InsightsActivity : AppCompatActivity() {
 
     // sets up click functions for navbar
     private fun setupBottomNav() {
-        findViewById<LinearLayout>(R.id.navManage).setOnClickListener { /* nothing yet */ }
+        findViewById<LinearLayout>(R.id.navManage).setOnClickListener { navigateToDashboard() }
         findViewById<LinearLayout>(R.id.navInsights).setOnClickListener { /* already here */ }
         findViewById<LinearLayout>(R.id.navAlerts).setOnClickListener {
             navigateToAlerts()
@@ -368,6 +368,9 @@ open class InsightsActivity : AppCompatActivity() {
     }
     private fun navigateToAlerts() {
         startActivity(Intent(this, AlertsActivity::class.java))
+    }
+    private fun navigateToDashboard() {
+        startActivity(Intent(this, DashboardActivity::class.java))
     }
 
 }

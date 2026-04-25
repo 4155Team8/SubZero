@@ -27,7 +27,7 @@
                 android:layout_height="wrap_content"
                 android:text="Insights"
                 android:textSize="30sp"
-                android:textStyle="bold"
+
                 android:textColor="@android:color/white"
                 android:fontFamily="sans-serif-medium" />
 
@@ -75,7 +75,7 @@
                             android:layout_height="wrap_content"
                             android:text="$0.00"
                             android:textSize="36sp"
-                            android:textStyle="bold"
+
                             android:textColor="#111111" />
 
                         <TextView
@@ -107,7 +107,7 @@
                 android:layout_marginTop="28dp"
                 android:text="Spending by Category"
                 android:textSize="20sp"
-                android:textStyle="bold"
+
                 android:textColor="@android:color/white" />
 
             <!-- Filter Button -->
@@ -174,7 +174,7 @@
                 android:layout_marginTop="28dp"
                 android:text="Your Subscriptions"
                 android:textSize="20sp"
-                android:textStyle="bold"
+
                 android:textColor="@android:color/white" />
 
             <!-- Subscriptions by category container -->
@@ -234,15 +234,15 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_trending_up"
-                app:tint="#5B2EFA" />
+                app:tint="@color/nav_active" />
             <TextView
                 android:layout_marginTop="4dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Insights"
                 android:textSize="11sp"
-                android:textColor="#5B2EFA"
-                android:textStyle="bold" />
+                android:textColor="@color/nav_active"
+                />
         </LinearLayout>
 
         <LinearLayout

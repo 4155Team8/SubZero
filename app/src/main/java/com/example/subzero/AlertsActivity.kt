@@ -23,6 +23,7 @@ import org.w3c.dom.Text
 import java.text.SimpleDateFormat
 import java.util.*
 import com.example.subzero.global.Utility
+import com.example.subzero.global.NotificationScheduler
 class AlertsActivity : AppCompatActivity() {
     private lateinit var remindersContainer : androidx.cardview.widget.CardView
     private lateinit var remindersList : LinearLayout
@@ -51,7 +52,7 @@ class AlertsActivity : AppCompatActivity() {
     }
 
     private fun setupBottomNav() {
-        findViewById<LinearLayout>(R.id.navManage).setOnClickListener { /* nothing yet */ }
+        findViewById<LinearLayout>(R.id.navManage).setOnClickListener { navigateToDashboard() }
         findViewById<LinearLayout>(R.id.navInsights).setOnClickListener { navigateToInsights() }
         findViewById<LinearLayout>(R.id.navAlerts).setOnClickListener { /* already here */ }
         findViewById<LinearLayout>(R.id.navProfile).setOnClickListener { navigateToProfile() }
@@ -70,19 +71,40 @@ class AlertsActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
 
-                // grab alerts
-                val alerts = calls.loadReminders(this@AlertsActivity)
+            // grab alerts
+            val alerts = calls.loadReminders(this@AlertsActivity)
 
-                // create list
-                val reminders: List<AlertResponse> = alerts ?: emptyList()
+            // create list
+            val reminders: List<AlertResponse> = alerts ?: emptyList()
 
-                // rendering stuff
-                if (reminders.isEmpty()) {
-                    showEmptyState()
-                } else {
-                    tvNewAlerts.text = reminders.size.toString() + " new"
-                    renderAlerts(reminders)
+            // rendering stuff
+            if (reminders.isEmpty()) {
+                showEmptyState()
+            } else {
+                tvNewAlerts.text = reminders.size.toString() + " new"
+                renderAlerts(reminders)
+                scheduleNotificationsForAlerts(reminders)
+            }
+        }
+    }
+
+    private fun scheduleNotificationsForAlerts(alerts: List<AlertResponse>) {
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        alerts.forEach { alert ->
+            try {
+                val reminderDate = sdf.parse(alert.reminder_date) ?: return@forEach
+                val delay = reminderDate.time - System.currentTimeMillis()
+                if (delay > 0) {
+                    NotificationScheduler.scheduleReminderNotification(
+                        context      = this,
+                        title        = alert.name,
+                        body         = alert.description,
+                        delayInMillis = delay
+                    )
                 }
+            } catch (e: Exception) {
+                Log.e("AlertsActivity", "Failed to schedule notification: ${e.message}")
+            }
         }
     }
 
@@ -189,6 +211,6 @@ class AlertsActivity : AppCompatActivity() {
         startActivity(Intent(this, ProfileActivity::class.java))
     }
     private fun navigateToDashboard() {
-        // nothing yet
+        startActivity(Intent(this, DashboardActivity::class.java))
     }
 }
