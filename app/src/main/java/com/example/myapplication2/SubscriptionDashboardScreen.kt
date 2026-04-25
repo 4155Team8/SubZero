@@ -53,7 +53,7 @@ import androidx.compose.ui.unit.dp
 import java.text.NumberFormat
 import java.util.Locale
 
-<<<<<<< HEAD
+
 private val Blue500 = Color(0xFF3B82F6)
 private val Blue600 = Color(0xFF2563EB)
 private val Purple500 = Color(0xFFA855F7)
@@ -69,7 +69,7 @@ private val Orange500 = Color(0xFFF59E0B)
 private enum class BottomTab {
     Manage, Insights, Alerts, Profile
 }
-=======
+
 private val DashboardBackgroundTop = Color(0xFFA855F7)
 private val DashboardBackgroundBottom = Color(0xFFA855F7)
 private val DashboardCardColor = Color(0xFFF7F3F4)
@@ -78,7 +78,7 @@ private val DashboardAccentSoft = Color(0xFFFFCDD2)
 private val DashboardGreen = Color(0xFF2E7D32)
 private val DashboardTextDark = Color(0xFF2B2B2B)
 private val DashboardMuted = Color(0xFF7A7A7A)
->>>>>>> 27ab9fb7b721d505f336e3fd30f87d6e5a029c98
+
 
 @Composable
 fun SubscriptionDashboardScreen(
@@ -90,12 +90,26 @@ fun SubscriptionDashboardScreen(
 
     val months = listOf("Nov", "Dec", "Jan", "Feb", "Mar", "Apr")
     var selectedMonth by remember { mutableStateOf("Nov") }
-    var selectedTab by remember { mutableStateOf(BottomTab.Alerts) }
+    var selectedTab by remember { mutableStateOf(BottomTab.Manage) }
 
     val selectedMonthItems = allItems.filter { it.month == selectedMonth }
     val totalSpend = selectedMonthItems.sumOf { it.cost }
     val monthlyBudget = 200.0
     val remainingBudget = monthlyBudget - totalSpend
+
+    val yearlySpend = months.sumOf { month ->
+        allItems.filter { it.month == month }.sumOf { it.cost }
+    }
+
+    val averageMonthlySpend = if (months.isNotEmpty()) yearlySpend / months.size else 0.0
+
+    val highestMonth = months.maxByOrNull { month ->
+        allItems.filter { it.month == month }.sumOf { it.cost }
+    } ?: "N/A"
+
+    val highestMonthAmount = allItems
+        .filter { it.month == highestMonth }
+        .sumOf { it.cost }
 
     val monthlyData = months.map { month ->
         MonthlySpend(
@@ -162,6 +176,16 @@ fun SubscriptionDashboardScreen(
                     SpendingChartCard(
                         monthlyData = monthlyData,
                         selectedMonth = selectedMonth
+                    )
+                }
+
+                item {
+                    YearlySpendingCard(
+                        yearlySpend = yearlySpend,
+                        averageMonthlySpend = averageMonthlySpend,
+                        highestMonth = highestMonth,
+                        highestMonthAmount = highestMonthAmount,
+                        currency = currency
                     )
                 }
 
@@ -640,5 +664,41 @@ private fun BottomBarItem(
             style = MaterialTheme.typography.labelMedium,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
         )
+    }
+}
+
+@Composable
+private fun YearlySpendingCard(
+    yearlySpend: Double,
+    averageMonthlySpend: Double,
+    highestMonth: String,
+    highestMonthAmount: Double,
+    currency: NumberFormat
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Yearly Spending",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF374151)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SummaryRow("Total Yearly Spend", currency.format(yearlySpend), Color(0xFF2563EB))
+            Spacer(modifier = Modifier.height(10.dp))
+            SummaryRow("Average Per Month", currency.format(averageMonthlySpend), Color(0xFF374151))
+            Spacer(modifier = Modifier.height(10.dp))
+            SummaryRow(
+                "Highest Month",
+                "$highestMonth - ${currency.format(highestMonthAmount)}",
+                Color(0xFFF59E0B)
+            )
+        }
     }
 }
