@@ -120,16 +120,6 @@ router.post("/billing-cycles/custom", authenticate, async (req, res) => {
 router.get("/", authenticate, async (req, res) => {
     try {
         const subscriptions = await getSubscriptionsByUser(req.user.id);
-        res.json(subscriptions);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// GET /subscriptions
-router.get("/", authenticate, async (req, res) => {
-    try {
-        const subscriptions = await getSubscriptionsByUser(req.user.id);
 
         // Fetch user budget
         const [userRows] = await db.query(
@@ -250,28 +240,6 @@ router.post("/monthly-spend", authenticate, async (req, res) => {
         res.json({ message: "Monthly spend recorded", year, month, total_spend: Number(total_spend) });
     } catch (err) {
         res.status(500).json({ error: err.message });
-    }
-});
-
-// GET /subscriptions/reminders
-router.get("/reminders", authenticate, async (req, res) => {
-    try {
-        const data = await require("./subscriptionModel").getSubscriptionNeedingReminder();
-        res.json(data);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// GET /subscriptions/generate-reminders
-router.get("/generate-reminders", authenticate, async (req, res) => {
-    try {
-        const reminders = await require("./subscriptionModel").generateReminders();
-        res.json(reminders);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Failed to generate reminders" });
     }
 });
 

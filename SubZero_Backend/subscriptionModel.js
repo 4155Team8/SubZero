@@ -135,7 +135,7 @@ const generateReminders = async (userId) => {
 
         // Insert reminder with generated name and description
         await db.query(
-            `INSERT INTO reminders (subscription_id, reminder_date, name, description)
+            `INSERT INTO reminders (subscription_id, user_id, reminder_date, name, description)
              VALUES (?, CURDATE(), ?, ?)`,
             [sub.id, name, description]
         );
