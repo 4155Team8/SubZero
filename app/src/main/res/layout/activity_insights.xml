@@ -110,6 +110,19 @@
 
                 android:textColor="@android:color/white" />
 
+            <!-- Filter Button -->
+            <Button
+                android:id="@+id/filterButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Filter Categories"
+                android:textSize="14sp"
+                android:textColor="@android:color/white"
+                android:background="@drawable/btn_gradient"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp" />
+
             <!-- Chart card -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
