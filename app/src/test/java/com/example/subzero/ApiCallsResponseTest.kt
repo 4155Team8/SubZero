@@ -58,7 +58,7 @@ class ApiCallsResponseTest {
         cost: Double = 12.99,
         category: String = "Entertainment",
         billingCycle: String = "monthly"
-    ) = SubscriptionResponse(id, name, cost, category, billingCycle, "2024-01-01", "2024-01-01")
+    ) = SubscriptionResponse(id, name, cost, category, billingCycle, "2024-01-01", "2024-01-01", "2024-01-01")
 
     // ------------------- Default fallback values -------------------
 
@@ -103,8 +103,8 @@ class ApiCallsResponseTest {
     @Test
     fun numSubsMatchesSubscriptionListSize() {
         val subs = listOf(
-            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
         val profile = buildProfile(subscriptions = subs)
         assertEquals(2, profile.numSubs)
@@ -113,7 +113,7 @@ class ApiCallsResponseTest {
     @Test
     fun numSubsWithSingleSubscriptionIsOne() {
         val subs = listOf(
-            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
         val profile = buildProfile(subscriptions = subs)
         assertEquals(1, profile.numSubs)

@@ -2,7 +2,6 @@ package com.example.subzero
 
 import android.content.Intent
 import android.graphics.Color
-import android.icu.util.TimeZone
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -11,44 +10,73 @@ import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.subzero.global.ApiCalls
 import com.example.subzero.network.AlertResponse
-import com.example.subzero.network.ApiClient
 import kotlinx.coroutines.launch
-import org.w3c.dom.Text
 import java.text.SimpleDateFormat
 import java.util.*
 import com.example.subzero.global.Utility
 import com.example.subzero.global.NotificationScheduler
+
 class AlertsActivity : AppCompatActivity() {
-    private lateinit var remindersContainer : androidx.cardview.widget.CardView
-    private lateinit var remindersList : LinearLayout
-    private lateinit var tvNewAlerts : TextView
+    private lateinit var remindersContainer: CardView
+    private lateinit var remindersList: LinearLayout
+    private lateinit var tvNewAlerts: TextView
+    private lateinit var btnClearAll: TextView
+    private lateinit var rlNotificationBackground: RelativeLayout
+    private lateinit var tvNotificationStatus: TextView
+    private lateinit var tvNotificationDesc: TextView
+    private lateinit var ivBellIcon: ImageView
+
     private var util = Utility()
     private var calls = ApiCalls()
+    private var remindersEnabled = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_alerts) // telling app to draw activity_alerts.xml
-        initViews() // initiates views
+        setContentView(R.layout.activity_alerts)
+        initViews()
         setupBottomNav()
-        loadAlerts()
+        loadProfileAndAlerts()
     }
 
     private fun initViews() {
-        // TODO: CONVERT TO LATEINIT
-        val navManage = findViewById<LinearLayout>(R.id.navManage)
-        val navInsights = findViewById<LinearLayout>(R.id.navInsights)
-        val navAlerts = findViewById<LinearLayout>(R.id.navAlerts)
-        val navProfile = findViewById<LinearLayout>(R.id.navProfile)
-
         remindersContainer = findViewById(R.id.remindersContainer)
         remindersList = findViewById(R.id.remindersList)
         tvNewAlerts = findViewById(R.id.tvNewAlerts)
+        btnClearAll = findViewById(R.id.btnClearAll)
+        rlNotificationBackground = findViewById(R.id.rlNotificationBackground)
+        tvNotificationStatus = findViewById(R.id.tvNotificationStatus)
+        tvNotificationDesc = findViewById(R.id.tvNotificationDesc)
+        ivBellIcon = findViewById(R.id.ivBellIcon)
+        setupClearAll()
+    }
+
+    private fun setupClearAll() {
+        btnClearAll.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("Clear Notifications")
+                .setMessage("Are you sure you want to clear all notifications?")
+                .setPositiveButton("Clear") { _, _ ->
+                    lifecycleScope.launch {
+                        val success = calls.clearReminders(this@AlertsActivity)
+                        if (success) {
+                            remindersList.removeAllViews()
+                            tvNewAlerts.text = "0 new"
+                            Toast.makeText(this@AlertsActivity, "Alerts cleared", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this@AlertsActivity, "Failed to clear alerts", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
     }
 
     private fun setupBottomNav() {
@@ -57,34 +85,66 @@ class AlertsActivity : AppCompatActivity() {
         findViewById<LinearLayout>(R.id.navAlerts).setOnClickListener { /* already here */ }
         findViewById<LinearLayout>(R.id.navProfile).setOnClickListener { navigateToProfile() }
     }
-    private fun renderAlerts(alerts: List<AlertResponse>) {
-        remindersList.removeAllViews()
 
-        val dp = resources.displayMetrics.density
-        alerts.forEach { alert ->
-            val alertView = buildAlerts(alert, dp)
-            remindersList.addView(alertView)
+    private fun applyNotificationState(enabled: Boolean) {
+        remindersEnabled = enabled
+        if (enabled) {
+            rlNotificationBackground.setBackgroundColor(Color.parseColor("#5a42f5"))
+            tvNotificationStatus.text = "Notifications Enabled"
+            tvNotificationDesc.text = "You'll be notified 3 days before renewals"
+            ivBellIcon.alpha = 1f
+        } else {
+            rlNotificationBackground.setBackgroundResource(R.drawable.gradient_background_disabled)
+            tvNotificationStatus.text = "Notifications Disabled"
+            tvNotificationDesc.text = "Tap to re-enable renewal reminders"
+            ivBellIcon.alpha = 0.5f
         }
     }
-    private fun loadAlerts() {
-        val token = SessionManager.getToken(this) ?: return
 
+    private fun setupNotificationToggle() {
+        rlNotificationBackground.setOnClickListener {
+            val newState = !remindersEnabled
+            // Optimistically update UI
+            applyNotificationState(newState)
+            // Persist to API
+            lifecycleScope.launch {
+                val result = calls.updateNotifications(this@AlertsActivity, newState)
+                if (result == null) {
+                    // Revert on failure
+                    applyNotificationState(!newState)
+                    Toast.makeText(this@AlertsActivity, "Failed to update notification setting", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun loadProfileAndAlerts() {
         lifecycleScope.launch {
+            // Load profile to get reminders_enabled preference
+            val profile = calls.loadProfile(this@AlertsActivity)
+            val enabled = profile?.reminders_enabled == 1
+            applyNotificationState(enabled)
+            setupNotificationToggle()
 
-            // grab alerts
+            // Load alerts
             val alerts = calls.loadReminders(this@AlertsActivity)
-
-            // create list
             val reminders: List<AlertResponse> = alerts ?: emptyList()
-
-            // rendering stuff
             if (reminders.isEmpty()) {
                 showEmptyState()
             } else {
-                tvNewAlerts.text = reminders.size.toString() + " new"
+                tvNewAlerts.text = "${reminders.size} new"
                 renderAlerts(reminders)
-                scheduleNotificationsForAlerts(reminders)
+                if (enabled) {
+                    scheduleNotificationsForAlerts(reminders)
+                }
             }
+        }
+    }
+    private fun renderAlerts(alerts: List<AlertResponse>) {
+        remindersList.removeAllViews()
+        val dp = resources.displayMetrics.density
+        alerts.forEach { alert ->
+            remindersList.addView(buildAlerts(alert, dp))
         }
     }
 

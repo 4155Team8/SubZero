@@ -137,9 +137,9 @@ class InsightsActivityTest {
     @Test
     fun monthlyTotalSumsAllSubscriptions() {
         val subs = listOf(
-            SubscriptionResponse(1, "Netflix",  12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Spotify",  9.99,  "Music",         "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(3, "Adobe",    54.99, "Productivity",  "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix",  12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify",  9.99,  "Music",         "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "Adobe",    54.99, "Productivity",  "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
         val total = subs.sumOf { normaliseToMonthly(it.cost, it.billing_cycle) }
         assertEquals(77.97, total, 0.01)
@@ -148,8 +148,8 @@ class InsightsActivityTest {
     @Test
     fun monthlyTotalWithMixedCyclesIsCorrect() {
         val subs = listOf(
-            SubscriptionResponse(1, "Netflix",  12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Adobe",    120.0, "Productivity",  "yearly",  "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix",  12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Adobe",    120.0, "Productivity",  "yearly",  "2024-01-01", "2024-01-01", "2024-01-01")
         )
         val total = subs.sumOf { normaliseToMonthly(it.cost, it.billing_cycle) }
         assertEquals(22.99, total, 0.01)
@@ -164,7 +164,7 @@ class InsightsActivityTest {
     @Test
     fun monthlyTotalForSingleSubscriptionIsCorrect() {
         val subs = listOf(
-            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
         val total = subs.sumOf { normaliseToMonthly(it.cost, it.billing_cycle) }
         assertEquals(12.99, total, 0.001)
@@ -175,8 +175,8 @@ class InsightsActivityTest {
     @Test
     fun singleCategoryGroupsAllSubscriptions() {
         val subs = listOf(
-            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Hulu",    7.99,  "Entertainment", "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Hulu",    7.99,  "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
         val byCategory = subs.groupBy { it.category }
         assertEquals(1, byCategory.size)
@@ -186,9 +186,9 @@ class InsightsActivityTest {
     @Test
     fun multiCategoryGroupsSeparatesCorrectly() {
         val subs = listOf(
-            SubscriptionResponse(1, "Netflix",  12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Spotify",  9.99,  "Music",         "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(3, "DoorDash", 18.0,  "Food",          "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix",  12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify",  9.99,  "Music",         "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0,  "Food",          "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
         val byCategory = subs.groupBy { it.category }
         assertEquals(3, byCategory.size)
@@ -197,9 +197,9 @@ class InsightsActivityTest {
     @Test
     fun categoryTotalsAreSortedDescending() {
         val subs = listOf(
-            SubscriptionResponse(1, "Netflix",  12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Adobe",    54.99, "Productivity",  "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(3, "DoorDash", 18.0,  "Food",          "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix",  12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Adobe",    54.99, "Productivity",  "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0,  "Food",          "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
         val byCategory = subs.groupBy { it.category }
         val sorted = byCategory
@@ -214,7 +214,7 @@ class InsightsActivityTest {
     @Test
     fun categoryWithOnlyYearlySubHasCorrectMonthlyTotal() {
         val subs = listOf(
-            SubscriptionResponse(1, "Adobe", 120.0, "Productivity", "yearly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Adobe", 120.0, "Productivity", "yearly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
         val byCategory = subs.groupBy { it.category }
         val total = byCategory["Productivity"]?.sumOf { normaliseToMonthly(it.cost, it.billing_cycle) } ?: 0.0
@@ -273,9 +273,9 @@ class InsightsActivityTest {
     @Test
     fun `subscriptions are grouped correctly by category`() {
         val subscriptions = listOf(
-            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Spotify", 12.01, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 12.01, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
 
         val byCategory = subscriptions.groupBy { it.category }
@@ -287,9 +287,9 @@ class InsightsActivityTest {
     @Test
     fun `category totals are calculated correctly`() {
         val subscriptions = listOf(
-            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Spotify", 12.01, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 12.01, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
 
         val byCategory = subscriptions.groupBy { it.category }
@@ -303,9 +303,9 @@ class InsightsActivityTest {
     @Test
     fun `monthly total is calculated correctly`() {
         val subscriptions = listOf(
-            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Spotify", 12.01, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 12.01, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
 
         val monthlyTotal = subscriptions.sumOf { it.cost }
@@ -317,9 +317,9 @@ class InsightsActivityTest {
     @Test
     fun `categories are sorted by total descending`() {
         val subscriptions = listOf(
-            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(3, "Adobe", 54.99, "Productivity", "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "Adobe", 54.99, "Productivity", "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
 
         val byCategory = subscriptions.groupBy { it.category }
@@ -366,8 +366,8 @@ class InsightsActivityTest {
     @Test
     fun `category total with mixed billing cycles`() {
         val subscriptions = listOf(
-            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Spotify", 120.0, "Entertainment", "yearly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 120.0, "Entertainment", "yearly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
 
         val byCategory = subscriptions.groupBy { it.category }
@@ -381,10 +381,10 @@ class InsightsActivityTest {
     @Test
     fun `multiple subscriptions in single category`() {
         val subscriptions = listOf(
-            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Spotify", 12.01, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(3, "Hulu", 7.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(4, "HBO", 15.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 12.01, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "Hulu", 7.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(4, "HBO", 15.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
 
         val byCategory = subscriptions.groupBy { it.category }
@@ -400,9 +400,9 @@ class InsightsActivityTest {
     @Test
     fun `filtering with empty selected categories shows all subscriptions`() {
         val subscriptions = listOf(
-            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
         val selectedCategories = mutableSetOf<String>()
         val filteredSubs = if (selectedCategories.isEmpty()) subscriptions else subscriptions.filter { it.category in selectedCategories }
@@ -412,10 +412,10 @@ class InsightsActivityTest {
     @Test
     fun `filtering with specific categories shows only matching subscriptions`() {
         val subscriptions = listOf(
-            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(4, "Hulu", 7.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(4, "Hulu", 7.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
         val selectedCategories = mutableSetOf("Entertainment")
         val filteredSubs = if (selectedCategories.isEmpty()) subscriptions else subscriptions.filter { it.category in selectedCategories }
@@ -426,10 +426,10 @@ class InsightsActivityTest {
     @Test
     fun `filtering with multiple categories shows matching subscriptions`() {
         val subscriptions = listOf(
-            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(4, "Adobe", 54.99, "Productivity", "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(4, "Adobe", 54.99, "Productivity", "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
         val selectedCategories = mutableSetOf("Entertainment", "Music")
         val filteredSubs = if (selectedCategories.isEmpty()) subscriptions else subscriptions.filter { it.category in selectedCategories }
@@ -440,8 +440,8 @@ class InsightsActivityTest {
     @Test
     fun `filtering with non-existent category shows no subscriptions`() {
         val subscriptions = listOf(
-            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
         val selectedCategories = mutableSetOf("NonExistent")
         val filteredSubs = if (selectedCategories.isEmpty()) subscriptions else subscriptions.filter { it.category in selectedCategories }
@@ -451,9 +451,9 @@ class InsightsActivityTest {
     @Test
     fun `monthly total with filtering is correct`() {
         val subscriptions = listOf(
-            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
         val selectedCategories = mutableSetOf("Entertainment", "Music")
         val filteredSubs = if (selectedCategories.isEmpty()) subscriptions else subscriptions.filter { it.category in selectedCategories }
@@ -464,9 +464,9 @@ class InsightsActivityTest {
     @Test
     fun `category grouping with filtering excludes non-selected categories`() {
         val subscriptions = listOf(
-            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
         val selectedCategories = mutableSetOf("Entertainment")
         val filteredSubs = if (selectedCategories.isEmpty()) subscriptions else subscriptions.filter { it.category in selectedCategories }
@@ -480,10 +480,10 @@ class InsightsActivityTest {
     @Test
     fun `category totals with filtering are sorted correctly`() {
         val subscriptions = listOf(
-            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01"),
-            SubscriptionResponse(4, "Adobe", 54.99, "Productivity", "monthly", "2024-01-01", "2024-01-01")
+            SubscriptionResponse(1, "Netflix", 12.99, "Entertainment", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(2, "Spotify", 9.99, "Music", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(3, "DoorDash", 18.0, "Food", "monthly", "2024-01-01", "2024-01-01", "2024-01-01"),
+            SubscriptionResponse(4, "Adobe", 54.99, "Productivity", "monthly", "2024-01-01", "2024-01-01", "2024-01-01")
         )
         val selectedCategories = mutableSetOf("Entertainment", "Productivity", "Food")
         val filteredSubs = if (selectedCategories.isEmpty()) subscriptions else subscriptions.filter { it.category in selectedCategories }

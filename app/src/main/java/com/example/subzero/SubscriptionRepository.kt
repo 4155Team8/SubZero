@@ -102,9 +102,9 @@ private fun SubscriptionResponse.toSubscription(): Subscription {
         cost = cost,
         month = month,
         billingDay = 1,
-        categoryId = null,    
-        billingCycleId = null,
-        category = category, 
+        categoryId = category_id,
+        billingCycleId = billing_cycle_id,
+        category = category,
         billingCycle = billing_cycle,
         renewalDate = renewal_date,
         isActive = true

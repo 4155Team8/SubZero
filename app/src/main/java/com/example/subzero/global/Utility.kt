@@ -3,6 +3,7 @@ package com.example.subzero.global
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import java.util.TimeZone
 
 class Utility {
 
@@ -35,6 +36,59 @@ class Utility {
             diffDays > 1   -> "$diffDays days ago"
             diffDays == -1 -> "Tomorrow"
             else           -> "In ${-diffDays} days"
+        }
+    }
+
+    /**
+     * Formats a "YYYY-MM-DD" date string to a readable form (e.g. "Apr 15, 2026").
+     * Safely takes only the first 10 chars so full ISO timestamps also work.
+     */
+    fun formatRenewalDate(dateStr: String?): String {
+        if (dateStr.isNullOrBlank()) return "—"
+        return try {
+            val sdf    = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val date   = sdf.parse(dateStr.take(10)) ?: return dateStr
+            SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(date)
+        } catch (e: Exception) {
+            dateStr
+        }
+    }
+
+    /**
+     * Returns true if [dateStr] ("YYYY-MM-DD" or ISO timestamp) falls in the current
+     * calendar month or any earlier month. Used by Insights to exclude future subscriptions.
+     * Returns true on null/blank/parse-error so those items are included rather than silently dropped.
+     */
+    fun isCurrentMonthOrEarlier(dateStr: String?): Boolean {
+        if (dateStr.isNullOrBlank()) return true
+        return try {
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            sdf.timeZone = TimeZone.getTimeZone("UTC")
+            val date = sdf.parse(dateStr.take(10)) ?: return true
+            val sub = Calendar.getInstance().apply { time = date }
+            val now = Calendar.getInstance()
+            sub.get(Calendar.YEAR) < now.get(Calendar.YEAR) ||
+            (sub.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
+             sub.get(Calendar.MONTH) <= now.get(Calendar.MONTH))
+        } catch (e: Exception) {
+            true
+        }
+    }
+
+    /**
+     * Converts a subscription cost to its normalized monthly equivalent.
+     * Matches the billing-cycle strings used by the backend's billingcycle table.
+     * A null/unrecognised cycle is treated as monthly (no change).
+     */
+    fun normaliseToMonthly(cost: Double, billingCycle: String?): Double {
+        if (billingCycle == null) return cost
+        return when {
+            billingCycle.contains("daily",    ignoreCase = true) -> cost * 30
+            billingCycle.contains("biweekly", ignoreCase = true) -> cost * 2.17
+            billingCycle.contains("weekly",   ignoreCase = true) -> cost * 4.33
+            billingCycle.contains("month",    ignoreCase = true) -> cost
+            billingCycle.contains("year",     ignoreCase = true) -> cost / 12
+            else -> cost
         }
     }
 

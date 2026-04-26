@@ -104,6 +104,17 @@ class ApiCalls {
         }
     }
 
+    suspend fun updateNotifications(cont: Context, enabled: Boolean): RemindersResponse? {
+        val token = SessionManager.getToken(cont) ?: return null
+        return try {
+            val response = ApiClient.instance.updateReminders("Bearer $token", RemindersRequest(enabled))
+            if (response.isSuccessful) response.body() else null
+        } catch (e: Exception) {
+            Log.e("ApiCalls", "updateNotifications error: ${e.localizedMessage}", e)
+            null
+        }
+    }
+
     suspend fun updateBudget(cont: Context, budget: Double): BudgetResponse? {
         val token = SessionManager.getToken(cont) ?: return null
         return try {
@@ -185,6 +196,43 @@ class ApiCalls {
         }
     }
 
+    suspend fun updateSubscription(
+        cont: Context,
+        id: Int,
+        name: String,
+        cost: Double,
+        categoryId: Int,
+        billingCycleId: Int,
+        renewalDate: String
+    ): SubscriptionResponse? {
+        return try {
+            val token = SessionManager.getToken(cont) ?: return null
+            val body = mapOf(
+                "name" to name,
+                "cost" to cost,
+                "category_id" to categoryId,
+                "billing_cycle_id" to billingCycleId,
+                "renewal_date" to renewalDate
+            )
+            val response = ApiClient.instance.updateSubscription("Bearer $token", id, body)
+            if (response.isSuccessful) response.body() else null
+        } catch (e: Exception) {
+            Log.e("ApiCalls", "updateSubscription error: $e")
+            null
+        }
+    }
+
+    suspend fun deleteSubscription(cont: Context, id: Int): Boolean {
+        return try {
+            val token = SessionManager.getToken(cont) ?: return false
+            val response = ApiClient.instance.deleteSubscription("Bearer $token", id)
+            response.isSuccessful
+        } catch (e: Exception) {
+            Log.e("ApiCalls", "deleteSubscription error: $e")
+            false
+        }
+    }
+
     suspend fun loadCategories(cont: Context): List<CategoryResponse>? {
         val token = SessionManager.getToken(cont) ?: return null
         return try {
@@ -204,6 +252,17 @@ class ApiCalls {
         } catch (e: Exception) {
             Log.e("ApiCalls", "loadBillingCycles error: $e")
             null
+        }
+    }
+
+    suspend fun clearReminders(cont: Context): Boolean {
+        val token = SessionManager.getToken(cont) ?: return false
+        return try {
+            val response = ApiClient.instance.clearAllAlerts("Bearer $token")
+            response.isSuccessful
+        } catch (e: Exception) {
+            Log.e("ApiCalls", "clearReminders error: ${e.localizedMessage}", e)
+            false
         }
     }
 }

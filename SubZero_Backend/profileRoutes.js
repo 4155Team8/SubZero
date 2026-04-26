@@ -41,30 +41,47 @@ router.get("/", verifyToken, async (req, res) => {
 
 router.post("/name", verifyToken, async (req, res) => {
     const { name } = req.body
-    const email = req.user.email
+    const id = req.user.id
 
     if (!name || typeof name !== "string" || name.trim() === "") {
         return res.status(400).json({ error: "Name is required" });
     }
 
     try {
-        const user = await updateName({ name: name.trim(), email });
+        const user = await updateName({ name: name.trim(), id });
         if (!user) return res.status(404).json({ error: "User not found" });
         res.status(200).json({ message: "Name updated successfully", user });
     } catch (err) {
-            console.error(err)  // add this
+            console.error(err)
             res.status(500).json({ error: err.message });
     }
 })
 
-async function updateName({ name, email }) {
+async function updateName({ name, id }) {
     const [result] = await db.query(
-        "UPDATE users SET name = ? WHERE email = ?",
-        [name, email]
+        "UPDATE users SET name = ? WHERE id = ?",
+        [name, id]
     );
     if (result.affectedRows === 0) return null;
-    return { name, email };
+    return { name, id };
 }
+
+// PUT /profile/reminders — toggle reminders_enabled for the logged-in user
+router.put("/reminders", verifyToken, async (req, res) => {
+    const { reminders_enabled } = req.body;
+    if (reminders_enabled === undefined || typeof reminders_enabled !== "boolean") {
+        return res.status(400).json({ error: "reminders_enabled (boolean) is required" });
+    }
+    try {
+        await db.query(
+            "UPDATE users SET reminders_enabled = ? WHERE id = ?",
+            [reminders_enabled ? 1 : 0, req.user.id]
+        );
+        res.json({ message: "Reminders setting updated", reminders_enabled });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 
 

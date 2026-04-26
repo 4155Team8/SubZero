@@ -7,6 +7,7 @@ const {
     getSubscriptionsByUser,
     updateSubscription,
     deleteSubscription,
+    generateReminders,
     clearRemindersForUser
 } = require("./subscriptionModel");
 
@@ -176,6 +177,12 @@ router.post("/", authenticate, async (req, res) => {
             billing_cycle_id,
             renewal_date: req.body.renewal_date ?? null
         });
+
+        // If the new subscription renews within 3 days, generate a reminder now
+        generateReminders(req.user.id).catch(err =>
+            console.error("[Reminders] Post-create generation failed:", err.message)
+        );
+
         res.status(201).json(subscription);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -185,7 +192,7 @@ router.post("/", authenticate, async (req, res) => {
 // PUT /subscriptions/:id
 router.put("/:id", authenticate, async (req, res) => {
     const { id } = req.params;
-    const { name, cost, category_id, billing_cycle_id } = req.body;
+    const { name, cost, category_id, billing_cycle_id, renewal_date } = req.body;
     if (!name || typeof name !== "string" || name.trim() === "") {
         return res.status(400).json({ error: "Subscription name is required" });
     }
@@ -197,7 +204,8 @@ router.put("/:id", authenticate, async (req, res) => {
             name: name.trim(),
             cost: Number(cost),
             category_id,
-            billing_cycle_id
+            billing_cycle_id,
+            renewal_date: renewal_date ?? null
         });
         res.json(result);
     } catch (err) {

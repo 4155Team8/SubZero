@@ -21,6 +21,8 @@ async function getSubscriptionsByUser(user_id) {
             s.created_at,
             s.renewal_date,
             s.updated_at,
+            s.category_id,
+            s.billing_cycle_id,
             c.name  AS category,
             bc.name AS billing_cycle
          FROM subscription s
@@ -48,13 +50,13 @@ async function clearRemindersForUser(user_id) {
 
 // Only updates if the subscription belongs to the user
 async function updateSubscription(id, user_id, data) {
-    const { name, cost, category_id, billing_cycle_id } = data;
+    const { name, cost, category_id, billing_cycle_id, renewal_date } = data;
 
     const [result] = await db.query(
         `UPDATE subscription
-         SET name=?, cost=?, category_id=?, billing_cycle_id=?
+         SET name=?, cost=?, category_id=?, billing_cycle_id=?, renewal_date=?
          WHERE id=? AND user_id=?`,
-        [name, cost, category_id, billing_cycle_id, id, user_id]
+        [name, cost, category_id, billing_cycle_id, renewal_date ?? null, id, user_id]
     );
 
     if (result.affectedRows === 0) {
@@ -99,29 +101,28 @@ const getSubscriptionNeedingReminder = async (userId) => {
     return results;
 };
 
-// Finds subscriptions renewing within 7 days and generates reminders for them
+// Finds subscriptions renewing within 3 days and generates reminders for them
 const generateReminders = async (userId) => {
     const [userRows] = await db.query(
-    "SELECT reminders_enabled FROM users WHERE id = ?",
-    [userId]
+        "SELECT reminders_enabled FROM users WHERE id = ?",
+        [userId]
     );
-    
-    if (!userRows[0].reminders_enabled) return [];
 
-    const query = `
-        SELECT s.id,
-               s.name,
-               s.cost,
-               s.renewal_date
-        FROM subscription s
-        WHERE s.is_active = TRUE
-          AND s.user_id = ?
-          AND s.renewal_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-          AND s.renewal_date >= CURDATE()
-          AND (s.last_reminded_at IS NULL OR DATE(s.last_reminded_at) < CURDATE())
-    `;
-    const [subscriptions] = await db.query(query, [userId]);
-    console.log("DEBUG subscriptions needing reminders:", subscriptions);
+    if (!userRows[0]?.reminders_enabled) return [];
+
+    const [subscriptions] = await db.query(
+        `SELECT s.id,
+                s.name,
+                s.cost,
+                s.renewal_date
+         FROM subscription s
+         WHERE s.is_active = TRUE
+           AND s.user_id = ?
+           AND s.renewal_date <= DATE_ADD(CURDATE(), INTERVAL 3 DAY)
+           AND s.renewal_date >= CURDATE()
+           AND (s.last_reminded_at IS NULL OR DATE(s.last_reminded_at) < CURDATE())`,
+        [userId]
+    );
 
     const generatedReminders = [];
 
@@ -131,17 +132,16 @@ const generateReminders = async (userId) => {
             (new Date(sub.renewal_date) - new Date()) / (1000 * 60 * 60 * 24)
         );
 
-        const name = sub.name;
-        const description = `Your ${sub.name} subscription renews in ${daysUntil} day${daysUntil !== 1 ? 's' : ''} on ${formattedDate} — $${sub.cost}`;
+        const name        = sub.name;
+        const description = `Your ${sub.name} subscription renews in ${daysUntil} day${daysUntil !== 1 ? "s" : ""} on ${formattedDate} — $${sub.cost}`;
 
-        // Insert reminder with generated name and description
+        // Fixed: columns and values are now correctly aligned
         await db.query(
             `INSERT INTO reminders (subscription_id, user_id, reminder_date, name, description)
-             VALUES (?, CURDATE(), ?, ?)`,
-            [sub.id, name, description]
+             VALUES (?, ?, CURDATE(), ?, ?)`,
+            [sub.id, userId, name, description]
         );
 
-        // Update last_reminded_at on the subscription
         await db.query(
             "UPDATE subscription SET last_reminded_at = NOW() WHERE id = ?",
             [sub.id]
@@ -153,6 +153,21 @@ const generateReminders = async (userId) => {
     return generatedReminders;
 };
 
+// Runs generateReminders for every user who has reminders enabled.
+// Called by the daily server-side scheduler in index.js.
+const generateRemindersForAllUsers = async () => {
+    const [users] = await db.query(
+        "SELECT id FROM users WHERE reminders_enabled = 1"
+    );
+
+    let total = 0;
+    for (const user of users) {
+        const reminders = await generateReminders(user.id);
+        total += reminders.length;
+    }
+    return total;
+};
+
 module.exports = {
     createSubscription,
     getSubscriptionsByUser,
@@ -160,5 +175,6 @@ module.exports = {
     deleteSubscription,
     getSubscriptionNeedingReminder,
     generateReminders,
+    generateRemindersForAllUsers,
     clearRemindersForUser
 };

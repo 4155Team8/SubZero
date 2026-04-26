@@ -263,4 +263,161 @@ class UtilityTest {
         val future = utility.timeAgo(isoStringDaysFromNow(5))
         assertNotEquals(past, future)
     }
+
+    // ------------------- normaliseToMonthly -------------------
+
+    @Test
+    fun normaliseToMonthlyDailyMultipliesBy30() {
+        assertEquals(30.0, utility.normaliseToMonthly(1.0, "daily"), 0.001)
+    }
+
+    @Test
+    fun normaliseToMonthlyDailyIsCaseInsensitive() {
+        assertEquals(30.0, utility.normaliseToMonthly(1.0, "Daily"), 0.001)
+        assertEquals(30.0, utility.normaliseToMonthly(1.0, "DAILY"), 0.001)
+    }
+
+    @Test
+    fun normaliseToMonthlyWeeklyMultipliesBy4Point33() {
+        assertEquals(43.3, utility.normaliseToMonthly(10.0, "weekly"), 0.001)
+    }
+
+    @Test
+    fun normaliseToMonthlyWeeklyIsCaseInsensitive() {
+        assertEquals(43.3, utility.normaliseToMonthly(10.0, "Weekly"), 0.001)
+    }
+
+    @Test
+    fun normaliseToMonthlyBiweeklyMultipliesBy2Point17() {
+        assertEquals(21.7, utility.normaliseToMonthly(10.0, "biweekly"), 0.001)
+    }
+
+    @Test
+    fun normaliseToMonthlyBiweeklyNotMatchedByWeeklyBranch() {
+        // biweekly must be checked before weekly since "biweekly" contains "weekly"
+        val biweekly = utility.normaliseToMonthly(10.0, "biweekly")
+        val weekly   = utility.normaliseToMonthly(10.0, "weekly")
+        assertNotEquals(biweekly, weekly, 0.001)
+    }
+
+    @Test
+    fun normaliseToMonthlyMonthlyReturnsCostUnchanged() {
+        assertEquals(15.99, utility.normaliseToMonthly(15.99, "monthly"), 0.001)
+    }
+
+    @Test
+    fun normaliseToMonthlyMonthlyIsCaseInsensitive() {
+        assertEquals(9.99, utility.normaliseToMonthly(9.99, "MONTHLY"), 0.001)
+    }
+
+    @Test
+    fun normaliseToMonthlyYearlyDividesCostBy12() {
+        assertEquals(10.0, utility.normaliseToMonthly(120.0, "yearly"), 0.001)
+    }
+
+    @Test
+    fun normaliseToMonthlyYearlyIsCaseInsensitive() {
+        assertEquals(10.0, utility.normaliseToMonthly(120.0, "Yearly"), 0.001)
+    }
+
+    @Test
+    fun normaliseToMonthlyNullCycleReturnsCostUnchanged() {
+        assertEquals(9.99, utility.normaliseToMonthly(9.99, null), 0.001)
+    }
+
+    @Test
+    fun normaliseToMonthlyUnknownCycleReturnsCostUnchanged() {
+        assertEquals(7.0, utility.normaliseToMonthly(7.0, "quarterly"), 0.001)
+    }
+
+    @Test
+    fun normaliseToMonthlyZeroCostReturnsZero() {
+        assertEquals(0.0, utility.normaliseToMonthly(0.0, "monthly"), 0.001)
+    }
+
+    @Test
+    fun normaliseToMonthlyLargeCostYearlyIsCorrect() {
+        assertEquals(100.0, utility.normaliseToMonthly(1200.0, "yearly"), 0.001)
+    }
+
+    // ------------------- isCurrentMonthOrEarlier -------------------
+
+    @Test
+    fun isCurrentMonthOrEarlierReturnsTrueForNull() {
+        assertTrue(utility.isCurrentMonthOrEarlier(null))
+    }
+
+    @Test
+    fun isCurrentMonthOrEarlierReturnsTrueForBlank() {
+        assertTrue(utility.isCurrentMonthOrEarlier(""))
+    }
+
+    @Test
+    fun isCurrentMonthOrEarlierReturnsTrueForMalformed() {
+        assertTrue(utility.isCurrentMonthOrEarlier("not-a-date"))
+    }
+
+    @Test
+    fun isCurrentMonthOrEarlierReturnsTrueForPastDate() {
+        assertTrue(utility.isCurrentMonthOrEarlier("2020-01-01"))
+    }
+
+    @Test
+    fun isCurrentMonthOrEarlierReturnsTrueForPastISOTimestamp() {
+        assertTrue(utility.isCurrentMonthOrEarlier("2020-06-15T10:00:00.000Z"))
+    }
+
+    @Test
+    fun isCurrentMonthOrEarlierReturnsTrueForCurrentMonth() {
+        val cal = Calendar.getInstance()
+        val year = cal.get(Calendar.YEAR)
+        val month = String.format("%02d", cal.get(Calendar.MONTH) + 1)
+        assertTrue(utility.isCurrentMonthOrEarlier("$year-$month-01"))
+    }
+
+    @Test
+    fun isCurrentMonthOrEarlierReturnsFalseForFarFuture() {
+        assertFalse(utility.isCurrentMonthOrEarlier("2099-12-01"))
+    }
+
+    // ------------------- formatRenewalDate -------------------
+
+    @Test
+    fun formatRenewalDateReturnsFormattedDateForValidInput() {
+        val result = utility.formatRenewalDate("2024-06-15")
+        assertEquals("Jun 15, 2024", result)
+    }
+
+    @Test
+    fun formatRenewalDateStripsTimestampBeforeParsing() {
+        val result = utility.formatRenewalDate("2024-01-01T00:00:00.000Z")
+        assertEquals("Jan 1, 2024", result)
+    }
+
+    @Test
+    fun formatRenewalDateReturnsEmDashForNull() {
+        assertEquals("—", utility.formatRenewalDate(null))
+    }
+
+    @Test
+    fun formatRenewalDateReturnsEmDashForBlank() {
+        assertEquals("—", utility.formatRenewalDate(""))
+    }
+
+    @Test
+    fun formatRenewalDateReturnsFallbackForMalformedInput() {
+        // should not throw; returns the raw string as fallback
+        val result = utility.formatRenewalDate("not-a-date")
+        assertNotNull(result)
+    }
+
+    @Test
+    fun formatRenewalDateHandlesDecember() {
+        assertEquals("Dec 25, 2023", utility.formatRenewalDate("2023-12-25"))
+    }
+
+    @Test
+    fun formatRenewalDateHandlesFirstOfMonth() {
+        assertEquals("Mar 1, 2025", utility.formatRenewalDate("2025-03-01"))
+    }
 }

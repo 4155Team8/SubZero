@@ -134,7 +134,7 @@ class ProfileActivity : AppCompatActivity() {
         startActivity(Intent(this, AlertsActivity::class.java))
     }
     private fun navigateToDashboard() {
-        // when dashboard is added
+        startActivity(Intent(this, DashboardActivity::class.java))
     }
     private fun navigateToPersonalInfo() {
         startActivity(Intent(this, PersonalInfoActivity::class.java))

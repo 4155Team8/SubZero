@@ -7,6 +7,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Path
 
 // endpoint bodies
 
@@ -33,6 +34,10 @@ data class MessageResponse(val message: String)
 data class BudgetRequest(val monthly_budget: Double)
 data class BudgetResponse(val message: String, val monthly_budget: Double)
 
+// Reminders toggle
+data class RemindersRequest(val reminders_enabled: Boolean)
+data class RemindersResponse(val message: String, val reminders_enabled: Boolean)
+
 // Monthly spend history entry
 data class MonthlySpendResponse(
     val year: Int,
@@ -58,7 +63,9 @@ data class SubscriptionResponse(
     val billing_cycle: String,
     val renewal_date: String?,
     val created_at: String,
-    val updated_at: String
+    val updated_at: String,
+    val category_id: Int? = null,
+    val billing_cycle_id: Int? = null
 )
 
 data class AlertResponse(
@@ -116,6 +123,9 @@ interface ApiService {
     @PUT("profile/budget")
     suspend fun updateBudget(@Header("Authorization") token: String, @Body body: BudgetRequest): Response<BudgetResponse>
 
+    @PUT("profile/reminders")
+    suspend fun updateReminders(@Header("Authorization") token: String, @Body body: RemindersRequest): Response<RemindersResponse>
+
     /** Returns DashboardResponse: subscriptions + monthly_budget + monthly_spend */
     @GET("subscriptions")
     suspend fun getDashboard(
@@ -143,6 +153,19 @@ interface ApiService {
         @Body body: Map<String, @JvmSuppressWildcards Any>
     ): Response<SubscriptionResponse>
 
+    @PUT("subscriptions/{id}")
+    suspend fun updateSubscription(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Body body: Map<String, @JvmSuppressWildcards Any>
+    ): Response<SubscriptionResponse>
+
+    @DELETE("subscriptions/{id}")
+    suspend fun deleteSubscription(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<MessageResponse>
+
     @GET("subscriptions/categories")
     suspend fun getCategories(
         @Header("Authorization") token: String
@@ -152,4 +175,9 @@ interface ApiService {
     suspend fun getBillingCycles(
         @Header("Authorization") token: String
     ): Response<List<BillingCycleResponse>>
+
+    @DELETE("reminders/clear-all")
+    suspend fun clearAllAlerts(
+        @Header("Authorization") token: String
+    ): Response<MessageResponse>
 }

@@ -19,13 +19,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.subzero.network.MonthlySpendResponse
 import java.text.NumberFormat
 import java.util.Locale
+import androidx.compose.ui.res.painterResource
 
 private val Blue500   = Color(0xFF3B82F6)
 private val Blue600   = Color(0xFF2563EB)
@@ -78,15 +81,14 @@ fun SubscriptionDashboardScreen(
         }
     }
 
-    // Compute spend for selected month — prefer API history, fall back to subscription list
-    val selectedHistoryEntry = monthlyHistory.find { it.month_label == selectedMonth }
-    val totalSpend = selectedHistoryEntry?.total_spend
-        ?: DashboardUtils.calculateTotalSpend(
-            DashboardUtils.filterSubscriptionsByMonth(allItems, selectedMonth)
-        )
-    val remainingBudget = DashboardUtils.calculateRemainingBudget(monthlyBudget, totalSpend)
+    // Carry-over: include subscriptions added in selectedMonth AND all earlier months,
+    // mirroring the management screen. Spend is normalised to monthly equivalent.
+    val selectedMonthItems = DashboardUtils.filterWithCarryOver(allItems, months, selectedMonth)
+    val totalSpend         = DashboardUtils.calculateTotalSpend(selectedMonthItems)
+    val remainingBudget    = DashboardUtils.calculateRemainingBudget(monthlyBudget, totalSpend)
 
-    // Build chart data from history if available, else derive from subscriptions
+    // Chart: use history when available, otherwise build from subscriptions with carry-over
+    // accumulation so each bar matches the corresponding month's summary card total.
     val monthlyChartData: List<MonthlySpend> = remember(monthlyHistory, allItems, months) {
         if (monthlyHistory.isNotEmpty()) {
             monthlyHistory.map { MonthlySpend(it.month_label, it.total_spend) }
@@ -94,8 +96,6 @@ fun SubscriptionDashboardScreen(
             DashboardUtils.buildMonthlySpendData(allItems, months)
         }
     }
-
-    val selectedMonthItems = DashboardUtils.filterSubscriptionsByMonth(allItems, selectedMonth)
 
     if (showBudgetDialog) {
         BudgetEditDialog(
@@ -178,6 +178,16 @@ fun SubscriptionDashboardScreen(
                         )
                     }
 
+                    if (monthlyBudget > 0 && totalSpend > monthlyBudget) {
+                        item {
+                            BudgetOverageCard(
+                                overage  = totalSpend - monthlyBudget,
+                                budget   = monthlyBudget,
+                                currency = currency
+                            )
+                        }
+                    }
+
                     item {
                         Text(
                             text       = "${selectedMonth.uppercase()} SUBSCRIPTIONS",
@@ -215,6 +225,43 @@ fun SubscriptionDashboardScreen(
 
                     item { Spacer(modifier = Modifier.height(100.dp)) }
                 }
+            }
+        }
+    }
+}
+
+// ── Budget Overage Card ───────────────────────────────────────────────────────
+
+@Composable
+private fun BudgetOverageCard(overage: Double, budget: Double, currency: NumberFormat) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape    = RoundedCornerShape(20.dp),
+        colors   = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
+    ) {
+        Row(
+            modifier             = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment    = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector        = Icons.Default.Warning,
+                contentDescription = null,
+                tint               = Color(0xFFD32F2F),
+                modifier           = Modifier.size(28.dp)
+            )
+            Column {
+                Text(
+                    text       = "Over Budget",
+                    fontWeight = FontWeight.Bold,
+                    color      = Color(0xFFD32F2F),
+                    style      = MaterialTheme.typography.titleSmall
+                )
+                Text(
+                    text  = "You're ${currency.format(overage)} over your ${currency.format(budget)} monthly budget.",
+                    color = Color(0xFFB71C1C),
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
         }
     }
@@ -565,23 +612,30 @@ private fun DashboardBottomBar(
     onProfileClick: () -> Unit
 ) {
     Row(
-        modifier              = Modifier.fillMaxWidth().background(White).navigationBarsPadding().padding(vertical = 12.dp, horizontal = 10.dp),
+        modifier              = Modifier
+            .fillMaxWidth()
+            .height(68.dp)
+            .background(White),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment     = Alignment.CenterVertically
     ) {
-        DashboardBottomBarItem("Manage",   Icons.Default.GridView,      selectedTab == DashboardTab.Manage,   onManageClick)
-        DashboardBottomBarItem("Insights", Icons.Default.TrendingUp,    selectedTab == DashboardTab.Insights, onInsightsClick)
-        DashboardBottomBarItem("Alerts",   Icons.Default.Notifications, selectedTab == DashboardTab.Alerts,   onAlertsClick)
-        DashboardBottomBarItem("Profile",  Icons.Default.Person,        selectedTab == DashboardTab.Profile,  onProfileClick)
+        DashboardBottomBarItem("Manage",   painterResource(R.drawable.ic_grid),        selectedTab == DashboardTab.Manage,   onManageClick)
+        DashboardBottomBarItem("Insights", painterResource(R.drawable.ic_trending_up),    selectedTab == DashboardTab.Insights, onInsightsClick)
+        DashboardBottomBarItem("Alerts",   painterResource(R.drawable.ic_noti_bell),   selectedTab == DashboardTab.Alerts,   onAlertsClick)
+        DashboardBottomBarItem("Profile",  painterResource(R.drawable.ic_person),      selectedTab == DashboardTab.Profile,  onProfileClick)
     }
 }
 
 @Composable
-private fun DashboardBottomBarItem(label: String, icon: ImageVector, selected: Boolean, onClick: () -> Unit) {
+private fun DashboardBottomBarItem(label: String, icon: Painter, selected: Boolean, onClick: () -> Unit) {
     val color = if (selected) Blue600 else Gray500
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { onClick() }) {
-        Icon(imageVector = icon, contentDescription = label, tint = color, modifier = Modifier.size(28.dp))
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.clickable { onClick() }
+    ) {
+        Icon(painter = icon, contentDescription = label, tint = color, modifier = Modifier.size(24.dp))
         Spacer(modifier = Modifier.height(4.dp))
-        Text(text = label, color = color, style = MaterialTheme.typography.labelMedium, fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium)
+        Text(text = label, color = color, fontSize = 11.sp, fontWeight = FontWeight.Normal)
     }
 }

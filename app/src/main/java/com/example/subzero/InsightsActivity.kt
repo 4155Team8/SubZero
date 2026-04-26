@@ -16,6 +16,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.subzero.global.ApiCalls
+import com.example.subzero.global.Utility
 import com.example.subzero.network.ApiClient
 import com.example.subzero.network.SubscriptionResponse
 import com.example.subzero.views.DonutChartView
@@ -47,6 +48,7 @@ open class InsightsActivity : AppCompatActivity() {
     private lateinit var subscriptionsByCategoryContainer: LinearLayout
     private lateinit var filterButton: Button
     private var calls = ApiCalls()
+    private val utility = Utility()
     private val selectedCategories = mutableSetOf<String>()
     private var allCategories = listOf<String>()
 
@@ -88,12 +90,17 @@ open class InsightsActivity : AppCompatActivity() {
         val token = SessionManager.getToken(this) ?: return
 
         lifecycleScope.launch {
-            // grab the subscriptions for the given account
             val subRes = calls.loadSubscriptions(this@InsightsActivity)
-            // create a list w the subscriptions
-            val subscriptions: List<SubscriptionResponse> = subRes ?: emptyList()
+
+            // Only include subscriptions that were created in the current month or earlier.
+            // Using created_at (not renewal_date) because renewal_date rolls forward to the
+            // next billing cycle, so filtering on it would exclude active older subscriptions.
+            val subscriptions: List<SubscriptionResponse> = (subRes ?: emptyList()).filter { sub ->
+                utility.isCurrentMonthOrEarlier(sub.created_at)
+            }
+
             allCategories = subscriptions.map { it.category }.distinct()
-            // rendering logic
+
             if (subscriptions.isEmpty()) {
                 showEmptyState()
             } else {
@@ -353,16 +360,8 @@ open class InsightsActivity : AppCompatActivity() {
         return wrapper
     }
 
-    internal fun normaliseToMonthly(cost: Double, billingCycle: String): Double {
-        return when {
-            billingCycle.contains("daily",    ignoreCase = true) -> cost * 30
-            billingCycle.contains("biweekly", ignoreCase = true) -> cost * 2.17
-            billingCycle.contains("weekly",   ignoreCase = true) -> cost * 4.33
-            billingCycle.contains("month",    ignoreCase = true) -> cost
-            billingCycle.contains("year",     ignoreCase = true) -> cost / 12
-            else -> cost
-        }
-    }
+    internal fun normaliseToMonthly(cost: Double, billingCycle: String): Double =
+        utility.normaliseToMonthly(cost, billingCycle)
     private fun navigateToProfile() {
         startActivity(Intent(this, ProfileActivity::class.java))
     }

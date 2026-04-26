@@ -1,5 +1,6 @@
 package com.example.subzero
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -22,7 +23,10 @@ class ManagementActivity : ComponentActivity() {
             SubZeroTheme {
                 SubscriptionManagementScreen(
                     vm = vm,
-                    onGoToDashboard = { finish() }
+                    onGoToDashboard = { finish() },
+                    onGoToInsights  = { startActivity(Intent(this, InsightsActivity::class.java)) },
+                    onGoToAlerts    = { startActivity(Intent(this, AlertsActivity::class.java)) },
+                    onGoToProfile   = { startActivity(Intent(this, ProfileActivity::class.java)) }
                 )
             }
         }

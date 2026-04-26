@@ -3,6 +3,8 @@ package com.example.subzero
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.widget.ImageView
@@ -10,11 +12,9 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.subzero.RegisterActivity.passVal
-import com.example.subzero.databinding.ActivityProfileBinding
 import com.example.subzero.global.ApiCalls
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
-import org.mindrot.jbcrypt.BCrypt
 import com.google.android.material.textfield.TextInputLayout
 
 
@@ -47,73 +47,94 @@ class PersonalInfoActivity : AppCompatActivity() {
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
         tvConfirmation = findViewById(R.id.tvConfirmation)
+        tvConfirmation.setTextColor(Color.TRANSPARENT) // hidden until save completes
         tvPassStrength = findViewById(R.id.tvPassStrength)
         ivPassMeter = findViewById(R.id.ivPassMeter)
         tilPassword = findViewById(R.id.tilPassword)
         tvPassError = findViewById(R.id.tvPassError)
+
+        // Hide meter and strength label until the user starts typing
+        ivPassMeter.visibility = View.GONE
+        tvPassStrength.visibility = View.GONE
+        tvPassError.visibility = View.GONE
     }
 
     private fun setupClickListeners() {
-        btnBack.setOnClickListener {
-            back();
-        }
+        btnBack.setOnClickListener { back() }
+
+        // Dynamic password strength meter — mirrors RegisterActivity behaviour
+        etPassword.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val password = s?.toString() ?: ""
+                if (password.isEmpty()) {
+                    ivPassMeter.visibility = View.GONE
+                    tvPassStrength.visibility = View.GONE
+                    tvPassError.visibility = View.GONE
+                    tilPassword.error = null
+                    tilPassword.isErrorEnabled = false
+                    return
+                }
+                ivPassMeter.visibility = View.VISIBLE
+                tvPassStrength.visibility = View.VISIBLE
+                val result = checkPassword(password)
+                tvPassStrength.text = "Password strength: ${result.strength}"
+            }
+        })
+
         btnSaveChanges.setOnClickListener {
-            if (!etName.text.isNullOrEmpty()) {
-                routeLogic(etName.text.toString(), null, null)
-            }
-            if (!etEmail.text.isNullOrEmpty()) {
-                Log.d("Email3", "What's in the box: " + etEmail.text.toString())
-                routeLogic(null, etEmail.text.toString(), null)
-            }
-            if (!etPassword.text.isNullOrEmpty() && validateInputs(etPassword.text.toString().trim())) {
-                routeLogic(null,null, etPassword.text.toString())
-            }
-        }
+            val name     = etName.text?.toString()?.trim()
+            val email    = etEmail.text?.toString()?.trim()
+            val password = etPassword.text?.toString()?.trim()
 
-    }
+            val hasName     = !name.isNullOrEmpty()
+            val hasEmail    = !email.isNullOrEmpty()
+            val hasPassword = !password.isNullOrEmpty()
 
-    private fun routeLogic(name: String?, email: String?, password: String?) {
-        if (name != null) {
-            val newName = etName.text?.toString()?.trim() ?: ""
+            // Validate password strength before doing anything
+            if (hasPassword && !validateInputs(password!!)) return@setOnClickListener
+
+            if (!hasName && !hasEmail && !hasPassword) return@setOnClickListener
+
             setLoading(true)
+            tvConfirmation.setTextColor(Color.TRANSPARENT)
+
             lifecycleScope.launch {
-                val result = api.updateName(this@PersonalInfoActivity, name)
-                val updatedName = result?.user?.name
-                if (newName == updatedName) {
-                    tvConfirmation.setTextColor(Color.argb(255,69,83,226))
-                    setLoading(false)
+                var allSuccess = true
+
+                if (hasName) {
+                    val result = api.updateName(this@PersonalInfoActivity, name)
+                    if (result == null) allSuccess = false
                 }
-            }
-        }
-        if (email != null) {
-            val newEmail    = etEmail.text?.toString()?.trim() ?: ""
-            setLoading(true)
-            lifecycleScope.launch {
-                val result = api.updateEmail(this@PersonalInfoActivity, email)
-                val updatedEmail = result?.user?.email
-                Log.d("Email1", "API response: " + updatedEmail)
-                Log.d("Email2", "User input: " + newEmail)
-                if (newEmail == updatedEmail) {
-                    SessionManager.saveSession(
-                        context = this@PersonalInfoActivity,
-                        token = SessionManager.getToken(this@PersonalInfoActivity) ?: "",
-                        userId = SessionManager.getUserId(this@PersonalInfoActivity),
-                        email = updatedEmail,
-                    )
-                    tvConfirmation.setTextColor(Color.argb(255,69,83,226))
-                    setLoading(false)
+
+                if (hasEmail) {
+                    val result = api.updateEmail(this@PersonalInfoActivity, email)
+                    if (result?.user?.email != null) {
+                        SessionManager.saveSession(
+                            context = this@PersonalInfoActivity,
+                            token   = SessionManager.getToken(this@PersonalInfoActivity) ?: "",
+                            userId  = SessionManager.getUserId(this@PersonalInfoActivity),
+                            email   = result.user.email,
+                        )
+                        Log.d("PersonalInfo", "Email updated to: ${result.user.email}")
+                    } else {
+                        allSuccess = false
+                    }
                 }
-            }
-        }
-        if (password != null) {
-            val newPassword = etPassword.text?.toString() ?: ""
-            setLoading(true)
-            lifecycleScope.launch {
-                val result = api.updatePassword(this@PersonalInfoActivity, password)
-                val newHash = result?.user?.password_hash
-                if (result?.user?.password_hash != null) {
-                    tvConfirmation.setTextColor(Color.argb(255,69,83,226))
-                    setLoading(false)
+
+                if (hasPassword) {
+                    val result = api.updatePassword(this@PersonalInfoActivity, password)
+                    if (result?.user?.password_hash == null) allSuccess = false
+                }
+
+                setLoading(false)
+                if (allSuccess) {
+                    tvConfirmation.text = "Changes Saved!"
+                    tvConfirmation.setTextColor(Color.argb(255, 69, 83, 226))
+                } else {
+                    tvConfirmation.text = "Some changes failed to save"
+                    tvConfirmation.setTextColor(Color.RED)
                 }
             }
         }
