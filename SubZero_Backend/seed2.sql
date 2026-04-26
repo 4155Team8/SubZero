@@ -16,12 +16,12 @@ INSERT INTO subscription (name, cost, user_id, category_id, billing_cycle_id, re
 
 -- ── User 2 reminders ─────────────────────────────────────────────────────────
 -- subscription IDs for user 2 start at 6 (after user 1's 5 subs)
-INSERT INTO reminders (name, subscription_id, reminder_date, description) VALUES
-    ('Netflix',              6,  '2026-05-07', 'Your Netflix payment is coming up soon.'),
-    ('Spotify',              7,  '2026-05-17', 'Spotify Premium renewal coming soon.'),
-    ('Amazon Prime',         8,  '2026-05-15', 'Amazon Prime renewal coming soon.'),
-    ('Gym Membership',       9,  '2026-05-02', 'Gym membership renewal coming soon.'),
-    ('Adobe Creative Cloud', 10, '2027-04-15', 'Adobe Creative Cloud annual renewal coming soon.');
+INSERT INTO reminders (user_id, name, subscription_id, reminder_date, description) VALUES
+    (2, 'Netflix',              6,  '2026-05-07', 'Your Netflix payment is coming up soon.'),
+    (2, 'Spotify',              7,  '2026-05-17', 'Spotify Premium renewal coming soon.'),
+    (2, 'Amazon Prime',         8,  '2026-05-15', 'Amazon Prime renewal coming soon.'),
+    (2, 'Gym Membership',       9,  '2026-05-02', 'Gym membership renewal coming soon.'),
+    (2, 'Adobe Creative Cloud', 10, '2027-04-15', 'Adobe Creative Cloud annual renewal coming soon.');
 
 -- ── User 2 monthly spend history (last 6 months) ─────────────────────────────
 INSERT IGNORE INTO monthly_spend_history (user_id, year, month, total_spend) VALUES

@@ -34,12 +34,12 @@ INSERT INTO subscription (name, cost, user_id, category_id, billing_cycle_id, re
     ('Adobe Creative Cloud',  52.99, 1, 5, 5, '2027-04-21');
 
 -- ── User 1 reminders ─────────────────────────────────────────────────────────
-INSERT INTO reminders (name, subscription_id, reminder_date, description) VALUES
-    ('Netflix',              1, '2026-05-19', 'Your Netflix payment is coming up soon.'),
-    ('Spotify',              2, '2026-05-19', 'Spotify Premium renewal coming soon.'),
-    ('Amazon Prime',         3, '2026-05-19', 'Amazon Prime renewal coming soon.'),
-    ('Gym Membership',       4, '2026-05-02', 'Gym membership renewal coming soon.'),
-    ('Adobe Creative Cloud', 5, '2027-04-18', 'Adobe Creative Cloud annual renewal coming soon.');
+INSERT INTO reminders (user_id, name, subscription_id, reminder_date, description) VALUES
+    (1, 'Netflix',              1, '2026-05-19', 'Your Netflix payment is coming up soon.'),
+    (1, 'Spotify',              2, '2026-05-19', 'Spotify Premium renewal coming soon.'),
+    (1, 'Amazon Prime',         3, '2026-05-19', 'Amazon Prime renewal coming soon.'),
+    (1, 'Gym Membership',       4, '2026-05-02', 'Gym membership renewal coming soon.'),
+    (1, 'Adobe Creative Cloud', 5, '2027-04-18', 'Adobe Creative Cloud annual renewal coming soon.');
 
 -- ── User 1 monthly spend history (last 6 months) ─────────────────────────────
 -- Reflects approximate monthly cost of active subscriptions per month
